@@ -17,7 +17,7 @@ Inspired by Andrej Karpathy's [HackerTube](https://hackertube.org): account-free
 - **Every change on the record.** Editing rules shows a diff and how many videos it adds or removes before you save. Each save becomes a version (v1, v2, …) with an optional note, and any version can be restored in one tap.
 - **Nothing hidden from you.** The Hidden tab lists every filtered video with the exact reason (`Shorter than 20 min (8:14)`, `Title contains “clips”`). Tap one to play it anyway.
 - **Listen or Watch.** Listen streams just the audio through a plain `<audio>` element, so it keeps playing with the screen locked and shows lock-screen controls. Watch uses the official YouTube embed. Switch at any second; if you lock your phone mid-video, it carries on as audio.
-- **Made for long episodes.** Resume where you left off, a Continue section, chapters parsed from descriptions, speed control (1–2×), and ±15/30s skips.
+- **Made for long episodes.** Resume where you left off, a Continue section, chapters parsed from descriptions, speed control (1–2×), −15/+30s skips, and Mark as finished to clear a video without playing it to the end.
 - **Private by design.** No account. Your channels, rules, history, and progress live on your device. Export and import a backup file to move them.
 
 ## The algorithm
@@ -98,6 +98,8 @@ YouTube IFrame player (Watch)                GET /api/channels/find?q=  (name, @
 - Sync between devices without an account (an encrypted backup link).
 - Shared rule sets: publish your rules and their history, and let others subscribe.
 - Per-channel rules (for example, a lower minimum length for a lecture channel).
+- An Up Next queue that plays episodes back to back.
+- Show notes with links (papers, books) in the player.
 
 ## Contributing
 
