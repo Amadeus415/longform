@@ -27,7 +27,7 @@ function resolve(id: string): Promise<Stream> {
     const { stdout } = await run(
       YTDLP,
       [
-        "-f", "140/bestaudio[ext=m4a]/bestaudio",
+        "-f", "140/bestaudio[ext=m4a]/bestaudio[acodec^=mp4a]/bestaudio",
         "--dump-json", "--skip-download", "--no-playlist", "--no-warnings",
         "--js-runtimes", "node",
         `https://www.youtube.com/watch?v=${id}`,
@@ -40,7 +40,8 @@ function resolve(id: string): Promise<Stream> {
     if (!url || !size) throw new Error("No audio stream found");
     const wait = Number(info.available_at ?? 0) * 1000 - Date.now();
     if (wait > 0) await new Promise((done) => setTimeout(done, wait + 300));
-    return { url, size, type: info.ext === "webm" ? "audio/webm" : "audio/mp4" };
+    const types: Record<string, string> = { m4a: "audio/mp4", mp4: "audio/mp4", webm: "audio/webm", mp3: "audio/mpeg", ogg: "audio/ogg" };
+    return { url, size, type: types[info.ext] ?? "application/octet-stream" };
   });
 }
 
@@ -51,15 +52,25 @@ export function warmAudio(id: string): void {
 
 export async function audioResponse(request: Request, id: string): Promise<Response> {
   if (!VIDEO_ID.test(id)) return new Response("Bad video id", { status: 400 });
-
-  let stream: Stream;
   try {
-    stream = await resolve(id);
+    return await respond(request, id);
   } catch (error) {
-    const missing = (error as NodeJS.ErrnoException).code === "ENOENT";
-    console.error(`[audio] ${id}: ${missing ? "yt-dlp is not installed (brew install yt-dlp)" : (error as Error).message.split("\n")[0]}`);
+    if (!request.signal.aborted) {
+      const missing = (error as NodeJS.ErrnoException).code === "ENOENT";
+      console.error(`[audio] ${id}: ${missing ? "yt-dlp is not installed (brew install yt-dlp)" : (error as Error).message.split("\n")[0]}`);
+    }
     return new Response("Audio unavailable for this video", { status: 502 });
   }
+}
+
+async function respond(request: Request, id: string): Promise<Response> {
+  let stream = await resolve(id);
+  // A cached stream URL can expire. When YouTube says so, look it up again (once) and carry on.
+  const refresh = async () => {
+    forget(`audio:${id}`);
+    stream = await resolve(id);
+    return stream.url;
+  };
 
   const range = parseRange(request.headers.get("range"), stream.size);
   if (range === "invalid") {
@@ -67,16 +78,14 @@ export async function audioResponse(request: Request, id: string): Promise<Respo
   }
   const [start, end] = range ?? [0, stream.size - 1];
 
-  // Fetch the first chunk before answering, so an expired stream URL can be retried transparently.
+  // Fetch the first chunk before answering, so an expired URL never reaches the client as an error.
   let first = await fetchChunk(stream.url, start, Math.min(end, start + CHUNK - 1), request.signal);
-  if (first.status === 403 || first.status === 410) {
-    forget(`audio:${id}`);
-    stream = await resolve(id);
-    first = await fetchChunk(stream.url, start, Math.min(end, start + CHUNK - 1), request.signal);
+  if (expired(first)) {
+    await first.body?.cancel();
+    first = await fetchChunk(await refresh(), start, Math.min(end, start + CHUNK - 1), request.signal);
   }
-  if (!first.ok || !first.body) return new Response("Upstream error", { status: 502 });
+  if (!first.ok || !first.body) throw new Error(`Upstream returned ${first.status}`);
 
-  const body = relay(first, stream.url, start, end, request.signal);
   const headers = new Headers({
     "Content-Type": stream.type,
     "Content-Length": String(end - start + 1),
@@ -84,7 +93,11 @@ export async function audioResponse(request: Request, id: string): Promise<Respo
     "Cache-Control": "private, max-age=3600",
   });
   if (range) headers.set("Content-Range", `bytes ${start}-${end}/${stream.size}`);
-  return new Response(body, { status: range ? 206 : 200, headers });
+  return new Response(relay(first, stream.url, refresh, start, end, request.signal), { status: range ? 206 : 200, headers });
+}
+
+function expired(response: Response): boolean {
+  return response.status === 403 || response.status === 410;
 }
 
 function parseRange(header: string | null, size: number): [number, number] | null | "invalid" {
@@ -108,7 +121,14 @@ function fetchChunk(url: string, start: number, end: number, signal: AbortSignal
 }
 
 /** Stream bytes start..end to the client, fetching one upstream chunk at a time. */
-function relay(first: Response, url: string, start: number, end: number, signal: AbortSignal): ReadableStream<Uint8Array> {
+function relay(
+  first: Response,
+  url: string,
+  refresh: () => Promise<string>,
+  start: number,
+  end: number,
+  signal: AbortSignal,
+): ReadableStream<Uint8Array> {
   let reader = first.body!.getReader();
   let next = Math.min(end, start + CHUNK - 1) + 1;
   return new ReadableStream({
@@ -119,7 +139,13 @@ function relay(first: Response, url: string, start: number, end: number, signal:
           if (value) return controller.enqueue(value);
           if (!done) continue;
           if (next > end) return controller.close();
-          const response = await fetchChunk(url, next, Math.min(end, next + CHUNK - 1), signal);
+          const chunkEnd = Math.min(end, next + CHUNK - 1);
+          let response = await fetchChunk(url, next, chunkEnd, signal);
+          if (expired(response)) {
+            await response.body?.cancel();
+            url = await refresh(); // a long episode can outlive its stream URL
+            response = await fetchChunk(url, next, chunkEnd, signal);
+          }
           if (!response.ok || !response.body) throw new Error(`Upstream returned ${response.status}`);
           reader = response.body.getReader();
           next = Math.min(end, next + CHUNK - 1) + 1;

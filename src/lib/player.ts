@@ -87,7 +87,13 @@ if (audio) {
   audio.preload = "auto";
   audio.setAttribute("playsinline", "");
   const listening = () => ps.mode === "listen";
-  audio.addEventListener("playing", () => listening() && set({ playing: true, loading: false, error: null }));
+  audio.addEventListener("playing", () => {
+    if (!listening()) return;
+    applyPendingSeek();
+    pendingSeek = null;
+    audio.playbackRate = getState().settings.rate; // Safari resets the rate when a new source loads
+    set({ playing: true, loading: false, error: null });
+  });
   audio.addEventListener("pause", () => {
     if (!listening()) return;
     set({ playing: false });
@@ -95,10 +101,10 @@ if (audio) {
   });
   audio.addEventListener("waiting", () => listening() && set({ loading: true }));
   audio.addEventListener("loadedmetadata", () => {
-    if (pendingSeek !== null) audio.currentTime = pendingSeek;
-    pendingSeek = null;
+    applyPendingSeek();
     if (Number.isFinite(audio.duration)) set({ duration: audio.duration });
   });
+  audio.addEventListener("canplay", applyPendingSeek);
   audio.addEventListener("timeupdate", () => {
     if (!listening() || pendingSeek !== null) return;
     set({ time: audio.currentTime });
@@ -115,6 +121,13 @@ if (audio) {
   });
 }
 
+/** Safari can ignore a seek made before the stream is seekable, so keep trying until it sticks. */
+function applyPendingSeek(): void {
+  if (pendingSeek === null) return;
+  audio.currentTime = pendingSeek;
+  if (Math.abs(audio.currentTime - pendingSeek) < 2) pendingSeek = null;
+}
+
 function audioSrc(id: string): string {
   return `/api/audio/${id}`;
 }
@@ -125,6 +138,8 @@ function startAudio(video: Video, at: number): void {
     audio.src = src;
     pendingSeek = at > 0 ? at : null;
     set({ loading: true });
+  } else if (audio.readyState < HTMLMediaElement.HAVE_METADATA) {
+    pendingSeek = at > 0 ? at : null;
   } else if (Math.abs(audio.currentTime - at) > 1) {
     audio.currentTime = at;
   }
@@ -135,6 +150,23 @@ function startAudio(video: Video, at: number): void {
   audio.play().catch((error: DOMException) => {
     if (error.name === "NotAllowedError") set({ playing: false, loading: false });
   });
+}
+
+/**
+ * Watch mode: load this video's audio too, and call play() once inside the user's tap. iOS only lets
+ * a media element start later without a tap (say, when the screen locks) if it was played in one.
+ */
+function primeAudio(video: Video): void {
+  if (!getState().settings.continueOnLock) return;
+  const src = audioSrc(video.id);
+  if (audio.getAttribute("src") !== src) {
+    audio.src = src;
+    pendingSeek = null;
+  }
+  audio.muted = true;
+  audio.play().catch(() => {});
+  audio.pause();
+  audio.muted = false;
 }
 
 // ---------- public controls ----------
@@ -154,7 +186,7 @@ export function play(video: Video, options: { mode?: Mode; at?: number; expand?:
   setMetadata(video);
   if (mode === "listen") startAudio(video, at);
   else {
-    audio.pause();
+    primeAudio(video);
     set({ loading: true, playing: false });
   }
 }
@@ -168,9 +200,17 @@ export function setMode(mode: Mode, remember = true): void {
     set({ mode, time: at });
     startAudio(ps.video, at);
   } else {
-    audio.pause();
+    primeAudio(ps.video);
     set({ mode, time: at, expanded: true, playing: false, loading: true });
   }
+}
+
+/** Done with this one: it counts as finished (and leaves the feed if "Hide finished" is on). */
+export function markFinished(): void {
+  if (!ps.video) return;
+  const d = ps.duration || ps.video.seconds || 0;
+  if (d) saveProgress(ps.video, d, d);
+  close();
 }
 
 export function toggle(): void {
