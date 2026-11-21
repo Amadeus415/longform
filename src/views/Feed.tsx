@@ -22,6 +22,7 @@ export function Feed() {
   const channels = useStore((s) => s.channels);
   const feeds = useStore((s) => s.feeds);
   const mode = useStore((s) => s.settings.mode);
+  const frames = useStore((s) => s.settings.frames);
   const latest = useStore((s) => s.history[s.history.length - 1]);
   const { shown, hidden, continuing, progress } = useFeed();
   const status = useFeedStatus();
@@ -40,7 +41,13 @@ export function Feed() {
   }, [channels, feeds, shown, progress]);
 
   const test = LENGTHS.find(([key]) => key === length)![2];
-  const list = shown.filter((v) => (!channel || v.channelId === channel) && (length === "all" || (v.seconds !== null && test(v.seconds))));
+  const showContinue = continuing.length >= 2 && channel === null && length === "all";
+  const inCarousel = new Set(showContinue ? continuing.map((p) => p.video.id) : []);
+  const list = shown.filter(
+    (v) => !inCarousel.has(v.id) && (!channel || v.channelId === channel) && (length === "all" || (v.seconds !== null && test(v.seconds))),
+  );
+  // Only offer lengths that have something in them (your rules may already rule some out).
+  const lengths = LENGTHS.filter(([key, , fits]) => key === "all" || key === length || shown.some((v) => v.seconds !== null && fits(v.seconds)));
 
   // Look up audio for the most likely next plays, so pressing play is instant.
   const likely = [continuing[0]?.video.id, list[0]?.id].filter(Boolean).join();
@@ -89,14 +96,14 @@ export function Feed() {
       </div>
 
       <div className="chips" role="toolbar" aria-label="Filter by length">
-        {LENGTHS.map(([key, label]) => (
+        {lengths.map(([key, label]) => (
           <button key={key} className={`chip press${length === key ? " on" : ""}`} onClick={() => setLength(key)} aria-pressed={length === key}>
             {label}
           </button>
         ))}
       </div>
 
-      {continuing.length >= 2 && !filtered && (
+      {showContinue && (
         <section>
           <div className="section-head"><h2>Continue listening</h2></div>
           <div className="carousel">
@@ -123,7 +130,7 @@ export function Feed() {
         <ul className="feed-list">
           {list.map((video) => (
             <li key={video.id}>
-              <Card video={video} progress={progress[video.id]} now={nowPlaying === video.id} />
+              <Card video={video} progress={progress[video.id]} now={nowPlaying === video.id} frames={frames} />
             </li>
           ))}
         </ul>
@@ -158,12 +165,12 @@ export function Feed() {
   );
 }
 
-function Card({ video, progress, now }: { video: Video; progress?: { t: number; d: number; done?: boolean }; now: boolean }) {
+function Card({ video, progress, now, frames }: { video: Video; progress?: { t: number; d: number; done?: boolean }; now: boolean; frames: boolean }) {
   const fraction = progress && !progress.done ? progress.t / progress.d : 0;
   const left = fraction > 0.01 ? `${span(progress!.d - progress!.t)} left` : null;
   return (
-    <article className={`card${progress?.done ? " played" : ""}${now ? " now" : ""}`}>
-      <button className="press" style={{ display: "block", width: "100%", textAlign: "left" }} onClick={() => play(video)} aria-label={`Play ${video.title}`}>
+    <article className={`card${progress?.done ? " played" : ""}${now ? " now" : ""}${frames ? "" : " text-only"}`}>
+      {frames && <button className="press" style={{ display: "block", width: "100%", textAlign: "left" }} onClick={() => play(video)} aria-label={`Play ${video.title}`}>
         <div className="media">
           <Frame id={video.id} />
           <div className="shade" />
@@ -174,13 +181,15 @@ function Card({ video, progress, now }: { video: Video; progress?: { t: number; 
           ) : null}
           {fraction > 0 && <div className="progress"><span style={{ width: `${fraction * 100}%` }} /></div>}
         </div>
-      </button>
+      </button>}
       <div className="meta-row">
         <Avatar id={video.channelId} title={video.channel} size={36} />
         <button className="text" style={{ textAlign: "left" }} onClick={() => play(video)} tabIndex={-1}>
           <span className="title">{video.title}</span>
           <div className="sub">
+            {now && <span className="playing">Playing · </span>}
             {video.channel} · {ago(video.published)}
+            {!frames && video.seconds ? ` · ${span(video.seconds)}` : ""}
             {left && <> · <span className="left">{left}</span></>}
           </div>
         </button>

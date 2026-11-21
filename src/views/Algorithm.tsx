@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { applyRules, describeChanges, DEFAULT_RULES, normalizeRules, type Hidden, type RuleKey, type Rules } from "../lib/filter";
 import { play } from "../lib/player";
 import { commitRules, currentRules, restoreVersion, useStore } from "../lib/store";
@@ -27,6 +27,7 @@ export function Algorithm() {
   const latest = history[history.length - 1];
   const [draft, setDraft] = useState<Rules>(saved);
   const [note, setNote] = useState("");
+  const [noting, setNoting] = useState(false);
   const [sheet, setSheet] = useState<null | { kind: "hidden"; rule?: RuleKey } | { kind: "diff" } | { kind: "json" }>(null);
   const [focus, setFocus] = useState<RuleKey | "shown" | null>(null);
 
@@ -44,6 +45,13 @@ export function Algorithm() {
   const changes = useMemo(() => describeChanges(saved, draft), [saved, draft]);
   const edit = (patch: Partial<Rules>) => setDraft((d) => ({ ...d, ...patch }));
 
+  // While there's an unsaved change, the save bar takes the mini-player's place.
+  const editing = changes.length > 0;
+  useEffect(() => {
+    document.documentElement.classList.toggle("has-draft", editing);
+    return () => document.documentElement.classList.remove("has-draft");
+  }, [editing]);
+
   const counts = new Map<RuleKey, number>();
   for (const h of after.hidden) counts.set(h.rule, (counts.get(h.rule) ?? 0) + 1);
   const total = after.shown.length + after.hidden.length;
@@ -51,6 +59,8 @@ export function Algorithm() {
   const save = () => {
     if (commitRules(draft, note)) {
       setNote("");
+      setNoting(false);
+      setSheet(null);
       toast(`Saved as v${latest.v + 1}`);
     }
   };
@@ -151,10 +161,15 @@ export function Algorithm() {
 
       {changes.length > 0 && (
         <div className="savebar glass" role="region" aria-label="Unsaved changes">
-          <div className="summary">{changes.join(" · ")}</div>
-          <label className="field">
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why this change? (optional)" />
-          </label>
+          <div className="summary">
+            <span>{changes.join(" · ")}</span>
+            {!noting && <button className="link" onClick={() => setNoting(true)}>Add note</button>}
+          </div>
+          {noting && (
+            <label className="field">
+              <input autoFocus value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why this change?" />
+            </label>
+          )}
           <div className="buttons">
             <button className="btn" onClick={() => setDraft(saved)}>Discard</button>
             <button className="delta" onClick={() => setSheet({ kind: "diff" })} aria-label="Preview which videos change">
@@ -166,7 +181,7 @@ export function Algorithm() {
       )}
 
       {sheet?.kind === "hidden" && <HiddenSheet hidden={after.hidden} rule={sheet.rule} onClose={() => setSheet(null)} />}
-      {sheet?.kind === "diff" && <DiffSheet before={before} after={after} onClose={() => setSheet(null)} />}
+      {sheet?.kind === "diff" && <DiffSheet before={before} after={after} onClose={() => setSheet(null)} onSave={changes.length ? save : undefined} version={latest.v + 1} />}
       {sheet?.kind === "json" && <JsonSheet rules={draft} onApply={(r) => (setDraft(r), setSheet(null))} onClose={() => setSheet(null)} />}
     </div>
   );
@@ -261,14 +276,17 @@ function HiddenSheet({ hidden, rule, onClose }: { hidden: Hidden[]; rule?: RuleK
   );
 }
 
-function DiffSheet({ before, after, onClose }: { before: ReturnType<typeof applyRules>; after: ReturnType<typeof applyRules>; onClose: () => void }) {
+function DiffSheet({ before, after, onClose, onSave, version }: { before: ReturnType<typeof applyRules>; after: ReturnType<typeof applyRules>; onClose: () => void; onSave?: () => void; version: number }) {
   const wasShown = new Set(before.shown.map((v) => v.id));
   const isShown = new Set(after.shown.map((v) => v.id));
   const nowHidden = after.hidden.filter((h) => wasShown.has(h.video.id));
   const nowShown = after.shown.filter((v) => !wasShown.has(v.id));
   return (
     <Sheet onClose={onClose} label="What changes" full>
-      <div className="sheet-title"><h2>What this change does</h2></div>
+      <div className="sheet-title">
+        <h2>What this change does</h2>
+        {onSave && <button className="btn accent" onClick={onSave}>Save v{version}</button>}
+      </div>
       {!nowHidden.length && !nowShown.length && <p className="empty">Your feed stays exactly the same.</p>}
       {nowShown.length > 0 && <div className="search-section">Added to your feed · {nowShown.length}</div>}
       {nowShown.map((v) => (

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { clock } from "../lib/filter";
 import {
-  RATES, attachEmbed, embedStateChanged, embedTick, expand, getPlayer, markFinished, minimize, play, seek, setMode, setRate, skip, toggle,
+  RATES, attachEmbed, close as stop, embedStateChanged, embedTick, expand, getPlayer, minimize, play, seek, setMode, setRate, skip, toggle,
   usePlayer,
 } from "../lib/player";
 import { getState, useStore } from "../lib/store";
 import type { Video } from "../lib/types";
+import { finish } from "./actions";
 import { Avatar, Frame, Icon, Segmented, ago, showActions } from "./ui";
 
 export function MiniPlayer() {
@@ -98,12 +99,22 @@ export function PlayerSheet() {
     else panel.current!.style.transform = "";
   };
 
+  // Finishing closes the player; the toast offers Undo.
+  function done() {
+    finish({ ...video, seconds: video.seconds || p.duration || null });
+    setClosing(true);
+    setTimeout(() => {
+      setClosing(false);
+      stop();
+    }, 230);
+  }
+
   const more = () =>
     showActions({
       title: video.title,
       subtitle: video.channel,
       actions: [
-        { icon: "done", label: "Mark as finished", run: markFinished },
+        { icon: "done", label: "Mark as finished", run: done },
         { icon: "external", label: "Open in YouTube", run: () => window.open(`https://www.youtube.com/watch?v=${video.id}&t=${Math.floor(p.time)}s`, "_blank") },
       ],
     });
@@ -146,7 +157,7 @@ export function PlayerSheet() {
                   {p.loading && !p.playing ? <span className="spinner" /> : <Icon name={p.playing ? "pause" : "play"} size={34} />}
                 </button>
                 <button className="icon-btn" onClick={() => skip(30)} aria-label="Forward 30 seconds"><Icon name="forward" size={34} label="30" /></button>
-                <button className="icon-btn" onClick={markFinished} aria-label="Mark as finished"><Icon name="done" size={26} /></button>
+                <button className="icon-btn" onClick={done} aria-label="Mark as finished"><Icon name="done" size={26} /></button>
               </div>
             </>
           )}

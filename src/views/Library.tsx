@@ -17,10 +17,6 @@ export function Library() {
     <div className="view">
       <header className="large-title"><h1>Library</h1></header>
 
-      <div className="narrow">
-        <Week />
-      </div>
-
       {recent.length > 0 && (
         <section>
           <div className="section-head"><h2>Recently played</h2></div>
@@ -42,6 +38,7 @@ export function Library() {
       )}
 
       <div className="narrow">
+        <Week />
         <div className="section-head"><h2>Following</h2></div>
         <div className="group">
           <button className="row" onClick={() => navigate("library/channels")}>
@@ -67,6 +64,10 @@ export function Library() {
 
         <div className="section-head"><h2>Appearance</h2></div>
         <div className="group">
+          <div className="row static">
+            <span className="label">Show video frames<small>Turn off for a calm, text-only feed</small></span>
+            <Toggle checked={settings.frames} onChange={(frames) => updateSettings({ frames })} label="Show video frames" />
+          </div>
           <div className="row static">
             <span className="label">Theme</span>
             <Segmented value={settings.theme} options={[["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]]} onChange={(theme) => updateSettings({ theme })} />
@@ -147,9 +148,12 @@ function Week() {
     return { date: d, seconds: listened[dayKey(d)] ?? 0, isToday: dayKey(d) === dayKey(today), future: d > today };
   });
   const total = days.reduce((sum, d) => sum + d.seconds, 0);
+  const everListened = Object.values(listened).some((seconds) => seconds >= 60);
   const peak = Math.max(...days.map((d) => d.seconds), 1);
   const finished = Object.values(progress).filter((p) => p.done && p.at >= monday.getTime()).length;
   const label = (seconds: number) => (seconds < 60 ? "0m" : span(seconds));
+
+  if (!everListened) return null; // nothing to chart yet
 
   return (
     <section className="week" aria-label="Listening this week">
@@ -170,7 +174,7 @@ function Week() {
             <span className={`b${d.seconds < 60 ? " zero" : ""}`} style={{ height: d.seconds < 60 ? 3 : `${Math.max(6, (d.seconds / peak) * 100)}%` }} />
           </button>
         ))}
-        {total < 60 && <span className="bars-empty">Time you spend listening shows up here.</span>}
+        {total < 60 && <span className="bars-empty">Nothing yet this week.</span>}
       </div>
       <div className="days" aria-hidden="true">
         {days.map((d, i) => (

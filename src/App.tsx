@@ -76,6 +76,7 @@ export function App() {
         {route === "library/channels" && <Channels />}
       </main>
 
+      <div className="dock-fade" aria-hidden="true" />
       <MiniPlayer />
       <nav className="tabbar glass" aria-label="Sections">
         {TABS.map((t) => (
