@@ -37,10 +37,12 @@ export function Feed({ onShowHidden, onChannels }: { onShowHidden: () => void; o
         <button className={`row${nowPlaying === video.id ? " now" : ""}${p?.done ? " done" : ""}`} onClick={() => play(video)}>
           <div className="row-text">
             <span className="row-title">{video.title}</span>
-            <span className="meta">
-              {video.channel}
-              {video.published ? ` · ${ago(video.published)}` : ""}
-              {left ? ` · ${left}` : !settings.frames && video.seconds ? ` · ${minutes(video.seconds)}` : ""}
+            <span className="meta row-meta">
+              <span className="channel">{video.channel}</span>
+              <span>
+                {video.published ? `\u00a0· ${ago(video.published)}` : ""}
+                {left ? ` · ${left}` : !settings.frames && video.seconds ? ` · ${minutes(video.seconds)}` : ""}
+              </span>
             </span>
           </div>
           {settings.frames && <Frame id={video.id} seconds={video.seconds} progress={fraction} />}

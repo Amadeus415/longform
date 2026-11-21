@@ -83,7 +83,7 @@ function FilterPill({ onClick }: { onClick: () => void }) {
   return (
     <button className="pill" onClick={onClick} aria-label="Your algorithm: rules, hidden videos, history">
       {status.pending > 0 && <span className="dot" aria-label="Updating" />}
-      {parts.join(" · ")} · {hidden.length} hidden
+      {parts.join(" · ")} · {hidden.length} hidden <span aria-hidden="true">▾</span>
     </button>
   );
 }

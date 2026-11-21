@@ -111,12 +111,15 @@ main {
   gap: 6px;
   font: 12px/1 var(--mono);
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--ink);
+  background: var(--raised);
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 7px 11px;
   white-space: nowrap;
 }
+
+.pill span { color: var(--muted); font-size: 10px; }
 
 
 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
@@ -173,7 +176,7 @@ code { font: 13px var(--mono); background: var(--chip); padding: 1px 5px; border
   font-weight: 520;
   letter-spacing: -0.01em;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-decoration: none;
@@ -183,6 +186,10 @@ code { font: 13px var(--mono); background: var(--chip); padding: 1px 5px; border
 .row.done { opacity: 0.55; }
 
 .reason { font: 12px/1.4 var(--mono); color: var(--accent); }
+
+.row-meta { display: flex; min-width: 0; white-space: nowrap; }
+.row-meta .channel { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.row-meta > span:last-child { flex: none; }
 
 .frame {
   position: relative;
@@ -419,7 +426,7 @@ input[type="search"], .search input, .apply input, .words input {
 .number::-webkit-inner-spin-button, .number::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 .words { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 0; }
-.words input { flex: 1 1 140px; padding: 6px 10px; font-size: 16px; }
+.words input { flex: 1 0 100%; margin-top: 2px; padding: 8px 10px; font-size: 16px; }
 
 .chip {
   display: inline-flex;
@@ -510,9 +517,9 @@ input[type="search"], .search input, .apply input, .words input {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 22px;
+  height: 44px;
   background: transparent;
-  margin: 0;
+  margin: -11px 0;
   cursor: pointer;
 }
 
@@ -539,6 +546,7 @@ input[type="search"], .search input, .apply input, .words input {
 .times { display: flex; justify-content: space-between; }
 
 .controls { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 4px; }
+.player-actions { display: flex; justify-content: center; margin-top: 6px; }
 .icon-button.big { width: 52px; height: 52px; }
 
 .play {

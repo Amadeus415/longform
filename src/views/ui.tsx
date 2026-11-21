@@ -15,10 +15,15 @@ const ICONS = {
   refresh: "M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.8-4.2L13 11h7V4z",
 };
 
-export function Icon({ name, size = 22 }: { name: keyof typeof ICONS; size?: number }) {
+export function Icon({ name, size = 22, label }: { name: keyof typeof ICONS; size?: number; label?: string }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
       <path d={ICONS[name]} fill="currentColor" />
+      {label && (
+        <text x="12" y="15.6" textAnchor="middle" fontSize="6.4" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, monospace">
+          {label}
+        </text>
+      )}
     </svg>
   );
 }

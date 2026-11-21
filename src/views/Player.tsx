@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { clock } from "../lib/filter";
 import {
-  RATES, attachEmbed, embedStateChanged, embedTick, expand, getPlayer, minimize, play, seek, setMode, setRate, skip, toggle, usePlayer,
+  RATES, attachEmbed, embedStateChanged, embedTick, expand, getPlayer, markFinished, minimize, play, seek, setMode, setRate, skip, toggle,
+  usePlayer,
 } from "../lib/player";
 import { getState, useStore } from "../lib/store";
 import type { Video } from "../lib/types";
@@ -20,7 +21,7 @@ export function MiniPlayer() {
           {p.error ? "Audio unavailable" : p.loading && !p.playing ? "Loading…" : `${clock(p.time)} / ${clock(p.duration)}`}
         </span>
       </button>
-      <button className="icon-button" onClick={() => skip(-15)} aria-label="Back 15 seconds"><Icon name="back" /></button>
+      <button className="icon-button" onClick={() => skip(-15)} aria-label="Back 15 seconds"><Icon name="back" size={26} label="15" /></button>
       <button className="icon-button" onClick={toggle} aria-label={p.playing ? "Pause" : "Play"}><Icon name={p.playing ? "pause" : "play"} size={26} /></button>
     </div>
   );
@@ -59,15 +60,19 @@ export function PlayerSheet() {
               <button className="rate" onClick={() => setRate(RATES[(RATES.indexOf(settings.rate) + 1) % RATES.length])} aria-label="Playback speed">
                 {settings.rate}×
               </button>
-              <button className="icon-button big" onClick={() => skip(-15)} aria-label="Back 15 seconds"><Icon name="back" size={30} /></button>
+              <button className="icon-button big" onClick={() => skip(-15)} aria-label="Back 15 seconds"><Icon name="back" size={34} label="15" /></button>
               <button className="play" onClick={toggle} aria-label={p.playing ? "Pause" : "Play"}>
                 {p.loading && !p.playing ? <span className="spinner" /> : <Icon name={p.playing ? "pause" : "play"} size={34} />}
               </button>
-              <button className="icon-button big" onClick={() => skip(30)} aria-label="Forward 30 seconds"><Icon name="forward" size={30} /></button>
+              <button className="icon-button big" onClick={() => skip(30)} aria-label="Forward 30 seconds"><Icon name="forward" size={34} label="30" /></button>
               <span className="rate" aria-hidden="true" />
             </div>
           </>
         )}
+
+        <div className="player-actions">
+          <button className="link muted" onClick={markFinished}>Mark as finished</button>
+        </div>
 
         {chapters.length > 0 && (
           <ol className="chapters">

@@ -77,11 +77,11 @@ function RulesEditor({ saved }: { saved: Rules }) {
 
       <div className="rule column">
         <span>Hide titles containing</span>
-        <Words words={draft.hideWords} onChange={(hideWords) => edit({ hideWords })} placeholder="Add a word or phrase" />
+        <Words words={draft.hideWords} onChange={(hideWords) => edit({ hideWords })} placeholder="Add word or phrase…" />
       </div>
       <div className="rule column">
         <span>…unless the title also contains</span>
-        <Words words={draft.allowWords} onChange={(allowWords) => edit({ allowWords })} placeholder="e.g. lecture" />
+        <Words words={draft.allowWords} onChange={(allowWords) => edit({ allowWords })} placeholder="Add word, e.g. lecture" />
       </div>
 
       <label className="rule">
@@ -198,14 +198,20 @@ function HiddenList({ onEditRules }: { onEditRules: () => void }) {
 
   return (
     <div>
-      <div className="words">
-        <button className={`chip${only ? "" : " on"}`} onClick={() => setOnly(null)}>All {hidden.length}</button>
-        {[...counts].map(([rule, n]) => (
-          <button key={rule} className={`chip${only === rule ? " on" : ""}`} onClick={() => setOnly(rule)}>
-            {RULE_NAMES[rule] ?? rule} {n}
-          </button>
-        ))}
-      </div>
+      <p className="quiet small">
+        Each video shows the rule that hid it. Tap one to play it anyway, or{" "}
+        <button className="link" onClick={onEditRules}>change the rules</button>.
+      </p>
+      {counts.size > 1 && (
+        <div className="words">
+          <button className={`chip${only ? "" : " on"}`} onClick={() => setOnly(null)}>All {hidden.length}</button>
+          {[...counts].map(([rule, n]) => (
+            <button key={rule} className={`chip${only === rule ? " on" : ""}`} onClick={() => setOnly(rule)}>
+              {RULE_NAMES[rule] ?? rule} {n}
+            </button>
+          ))}
+        </div>
+      )}
       <ul className="list">
         {list.map(({ video, reason }) => (
           <li key={video.id}>
@@ -219,9 +225,6 @@ function HiddenList({ onEditRules }: { onEditRules: () => void }) {
           </li>
         ))}
       </ul>
-      <p className="quiet small center">
-        Tap a video to play it anyway. Hiding the wrong things? <button className="link" onClick={onEditRules}>Change the rules</button>.
-      </p>
     </div>
   );
 }
