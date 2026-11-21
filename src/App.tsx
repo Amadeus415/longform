@@ -1,89 +1,93 @@
-import { useEffect, useState } from "react";
-import { refreshFeeds, useFeedStatus } from "./lib/feed";
-import { useStore } from "./lib/store";
-import { useFeed } from "./lib/useFeed";
-import { Algorithm, type Tab } from "./views/Algorithm";
+import { useEffect } from "react";
+import { refreshFeeds } from "./lib/feed";
+import { navigate, tabOf, useRoute } from "./lib/nav";
+import { restore } from "./lib/player";
+import { getState, useStore } from "./lib/store";
+import { Algorithm } from "./views/Algorithm";
 import { Channels } from "./views/Channels";
 import { Feed } from "./views/Feed";
+import { Library } from "./views/Library";
+import { Onboarding } from "./views/Onboarding";
 import { MiniPlayer, PlayerSheet } from "./views/Player";
-import { Icon } from "./views/ui";
+import { ActionHost, Icon, Toasts, type IconName } from "./views/ui";
 
-type View = "feed" | "channels";
-
-function useHashView(): [View, (v: View) => void] {
-  const read = (): View => (location.hash === "#channels" ? "channels" : "feed");
-  const [view, setView] = useState<View>(read);
-  useEffect(() => {
-    const onHash = () => {
-      setView(read());
-      window.scrollTo(0, 0);
-    };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-  return [view, (v) => (location.hash = v === "feed" ? "" : v)];
-}
+const TABS: { id: "feed" | "algorithm" | "library"; label: string; icon: IconName; active: IconName }[] = [
+  { id: "feed", label: "Feed", icon: "home", active: "homeFill" },
+  { id: "algorithm", label: "Algorithm", icon: "algorithm", active: "algorithm" },
+  { id: "library", label: "Library", icon: "you", active: "you" },
+];
 
 export function App() {
-  const [view, go] = useHashView();
-  const [sheet, setSheet] = useState<Tab | null>(null);
-  const { channels, settings } = useStore();
+  const route = useRoute();
+  const theme = useStore((s) => s.settings.theme);
+  const channelCount = useStore((s) => s.channels.length);
 
   useEffect(() => {
     const root = document.documentElement;
-    if (settings.theme === "auto") delete root.dataset.theme;
-    else root.dataset.theme = settings.theme;
-  }, [settings.theme]);
+    if (theme === "auto") delete root.dataset.theme;
+    else root.dataset.theme = theme;
+  }, [theme]);
 
   useEffect(() => {
     refreshFeeds();
     const onVisible = () => !document.hidden && refreshFeeds();
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [channels.length]);
+  }, [channelCount]);
 
+  // Reopen with the last unfinished episode in the mini-player, paused.
+  useEffect(() => {
+    const { progress, feeds } = getState();
+    const last = Object.values(progress).filter((p) => !p.done && p.t > 30).sort((a, b) => b.at - a.at)[0];
+    if (!last) return;
+    const full = feeds[last.video.channelId]?.videos.find((v) => v.id === last.video.id);
+    restore(full ?? { ...last.video, seconds: last.video.seconds ?? last.d }, last.t, last.d);
+  }, []);
+
+  if (!channelCount && route === "feed") {
+    return (
+      <>
+        <Onboarding />
+        <Toasts />
+      </>
+    );
+  }
+
+  const tab = tabOf(route);
   return (
-    <>
-      <header className="top">
-        {view === "feed" ? (
-          <>
-            <a className="wordmark" href="#" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Longform</a>
-            {channels.length > 0 && <FilterPill onClick={() => setSheet("rules")} />}
-            <button className="text-button" onClick={() => go("channels")}>Channels</button>
-          </>
-        ) : (
-          <>
-            <button className="text-button back" onClick={() => go("feed")}><Icon name="left" size={20} /> Feed</button>
-            <span className="top-title">Channels & settings</span>
-            <span className="spacer" />
-          </>
-        )}
-      </header>
+    <div className="app">
+      <nav className="side-rail" aria-label="Sections">
+        <a className="brand" href="#" onClick={(e) => (e.preventDefault(), navigate("feed"))}>
+          <img className="brand-mark" src="/icons/icon-192.png" alt="" />
+          <span className="brand-word">Longform</span>
+        </a>
+        {TABS.map((t) => (
+          <button key={t.id} className={`tab${tab === t.id ? " on" : ""}`} onClick={() => navigate(t.id)} aria-current={tab === t.id ? "page" : undefined}>
+            <Icon name={tab === t.id ? t.active : t.icon} strong={tab === t.id} />
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </nav>
 
       <main>
-        {view === "feed" ? (
-          <Feed onShowHidden={() => setSheet("hidden")} onChannels={() => go("channels")} />
-        ) : (
-          <Channels onRules={() => setSheet("rules")} />
-        )}
+        {route === "feed" && <Feed />}
+        {route === "algorithm" && <Algorithm />}
+        {route === "library" && <Library />}
+        {route === "library/channels" && <Channels />}
       </main>
 
       <MiniPlayer />
+      <nav className="tabbar glass" aria-label="Sections">
+        {TABS.map((t) => (
+          <button key={t.id} className={`tab${tab === t.id ? " on" : ""}`} onClick={() => navigate(t.id)} aria-current={tab === t.id ? "page" : undefined}>
+            <Icon name={tab === t.id ? t.active : t.icon} strong={tab === t.id} />
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </nav>
       <PlayerSheet />
-      {sheet && <Algorithm tab={sheet} onTab={setSheet} onClose={() => setSheet(null)} />}
-    </>
-  );
-}
-
-function FilterPill({ onClick }: { onClick: () => void }) {
-  const { rules, hidden } = useFeed();
-  const status = useFeedStatus();
-  const parts = [rules.minMinutes ? `${rules.minMinutes}m+` : "any length"];
-  if (rules.maxAgeDays) parts.push(`${rules.maxAgeDays}d`);
-  return (
-    <button className="pill" onClick={onClick} aria-label="Your algorithm: rules, hidden videos, history">
-      {status.pending > 0 && <span className="dot" aria-label="Updating" />}
-      {parts.join(" · ")} · {hidden.length} hidden <span aria-hidden="true">▾</span>
-    </button>
+      <ActionHost />
+      <Toasts />
+    </div>
   );
 }

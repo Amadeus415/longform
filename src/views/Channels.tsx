@@ -1,219 +1,161 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { findChannels, parseSubscriptions, refreshFeeds } from "../lib/feed";
+import { intent, navigate } from "../lib/nav";
 import { STARTER_PACKS } from "../lib/starter";
-import { addChannels, exportData, importData, removeChannel, updateSettings, useStore } from "../lib/store";
+import { addChannels, useStore } from "../lib/store";
 import type { ChannelHit } from "../lib/types";
-import { REPO_URL, Segmented } from "./ui";
+import { unfollow } from "./actions";
+import { Avatar, Icon, ago, showActions, toast } from "./ui";
 
-export function Channels({ onRules }: { onRules: () => void }) {
-  const { channels, settings } = useStore();
+export function Channels() {
+  const channels = useStore((s) => s.channels);
+  const feeds = useStore((s) => s.feeds);
   const have = new Set(channels.map((c) => c.id));
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<ChannelHit[] | null>(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const takeout = useRef<HTMLInputElement>(null);
-  const backup = useRef<HTMLInputElement>(null);
 
   const add = (list: { id: string; title: string }[]) => {
     const added = addChannels(list);
-    setMessage(added ? `Added ${added} channel${added === 1 ? "" : "s"}.` : "Already in your channels.");
+    toast(added ? `Following ${added === 1 ? list[0].title : `${added} channels`}` : "Already following");
     refreshFeeds();
   };
 
-  const search = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const search = async (q: string) => {
+    if (!q.trim()) return;
     setBusy(true);
-    setMessage(null);
     try {
-      const results = await findChannels(query);
+      const results = await findChannels(q);
       setHits(results);
-      if (!results.length) setMessage("No channels found. Try their @handle or a link to one of their videos.");
     } catch (error) {
-      setMessage((error as Error).message);
+      toast((error as Error).message);
     } finally {
       setBusy(false);
     }
   };
 
-  const readFile = (input: HTMLInputElement | null, use: (text: string) => void) => {
-    const file = input?.files?.[0];
-    if (!file) return;
-    file.text().then(use).catch(() => setMessage("Couldn’t read that file."));
-    input.value = "";
-  };
+  useEffect(() => {
+    if (intent.channelQuery) {
+      setQuery(intent.channelQuery);
+      search(intent.channelQuery);
+      intent.channelQuery = undefined;
+    }
+  }, []);
+
+  const sorted = [...channels].sort((a, b) => a.title.localeCompare(b.title));
 
   return (
-    <div className="page">
-      <form className="search" onSubmit={search}>
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Add a channel: name, @handle, or link"
-          aria-label="Add a channel"
-          autoCapitalize="off"
-          autoCorrect="off"
-          enterKeyHint="search"
-        />
-        <button className="button" disabled={busy}>{busy ? "…" : "Find"}</button>
-      </form>
-      {message && <p className="note" role="status">{message}</p>}
+    <div className="view">
+      <div className="back-bar">
+        <button className="btn-back" onClick={() => navigate("library")}><Icon name="left" size={22} /> Library</button>
+      </div>
+      <header className="large-title" style={{ paddingTop: 4 }}>
+        <div>
+          <h1>Channels</h1>
+          <p className="subtitle">{channels.length ? `Following ${channels.length}` : "Follow the channels you trust"}</p>
+        </div>
+      </header>
 
-      {hits && hits.length > 0 && (
-        <ul className="list hits">
-          {hits.map((hit) => (
-            <li key={hit.id} className="item">
-              {hit.thumbnail ? <img className="avatar" src={hit.thumbnail} alt="" /> : <span className="avatar" />}
-              <div className="row-text">
-                <span className="row-title">{hit.title}</span>
-                <span className="meta">{[hit.handle, hit.subscribers].filter(Boolean).join(" · ")}</span>
+      <div className="narrow">
+        <form className="page" onSubmit={(e: FormEvent) => (e.preventDefault(), search(query))} style={{ marginTop: 10 }}>
+          <label className="field">
+            <Icon name="search" size={20} />
+            <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Name, @handle, or YouTube link" enterKeyHint="search" autoCapitalize="off" autoCorrect="off" />
+            {busy && <span className="spinner" style={{ width: 18, height: 18, borderWidth: 2, borderColor: "var(--line)", borderTopColor: "var(--text-2)" }} />}
+          </label>
+        </form>
+
+        {hits && (
+          <>
+            <div className="section-head"><h2>Results</h2></div>
+            {hits.length ? (
+              <div className="group">
+                {hits.map((hit) => (
+                  <div key={hit.id} className="row with-avatar static">
+                    {hit.thumbnail ? <span className="avatar" style={{ width: 44, height: 44 }}><img src={hit.thumbnail} alt="" /></span> : <Avatar id={hit.id} title={hit.title} size={44} />}
+                    <span className="label">{hit.title}<small>{[hit.handle, hit.subscribers].filter(Boolean).join(" · ")}</small></span>
+                    {have.has(hit.id) ? <span className="value">Following</span> : <button className="btn accent" onClick={() => add([{ id: hit.id, title: hit.title }])}>Follow</button>}
+                  </div>
+                ))}
               </div>
-              {have.has(hit.id) ? (
-                <span className="quiet">Added</span>
-              ) : (
-                <button className="button" onClick={() => add([{ id: hit.id, title: hit.title }])}>Add</button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <section>
-        <h2 className="label">Your channels · {channels.length}</h2>
-        {channels.length === 0 ? (
-          <p className="quiet">None yet. Search above, add a pack, or import your subscriptions.</p>
-        ) : (
-          <ul className="list">
-            {[...channels].sort((a, b) => a.title.localeCompare(b.title)).map((c) => (
-              <li key={c.id} className="item">
-                <a className="row-title grow" href={`https://www.youtube.com/channel/${c.id}`} target="_blank" rel="noreferrer">
-                  {c.title || c.id}
-                </a>
-                <button className="link muted" onClick={() => removeChannel(c.id)} aria-label={`Remove ${c.title}`}>
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
+            ) : (
+              <p className="empty">No channels found. Try their @handle, or paste a link to one of their videos.</p>
+            )}
+          </>
         )}
-      </section>
 
-      <section>
-        <h2 className="label">Starter packs</h2>
-        <ul className="list">
+        {channels.length > 0 && (
+          <>
+            <div className="section-head"><h2>Following</h2></div>
+            <div className="group">
+              {sorted.map((c) => {
+                const newest = feeds[c.id]?.videos[0]?.published;
+                return (
+                  <div key={c.id} className="row with-avatar static">
+                    <Avatar id={c.id} title={c.title} size={44} />
+                    <span className="label">{c.title || c.id}<small>{newest ? `Latest upload ${ago(newest).toLowerCase()}` : "Loading…"}</small></span>
+                    <button
+                      className="icon-btn"
+                      aria-label={`Options for ${c.title}`}
+                      onClick={() =>
+                        showActions({
+                          title: c.title,
+                          actions: [
+                            { icon: "external", label: "Open in YouTube", run: () => window.open(`https://www.youtube.com/channel/${c.id}`, "_blank") },
+                            { icon: "unfollow", label: "Unfollow", danger: true, run: () => unfollow(c.id, c.title) },
+                          ],
+                        })
+                      }
+                    >
+                      <Icon name="more" size={20} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        <div className="section-head"><h2>Starter packs</h2></div>
+        <div className="page">
           {STARTER_PACKS.map((pack) => {
             const missing = pack.channels.filter((c) => !have.has(c.id));
             return (
-              <li key={pack.name} className="item">
-                <div className="row-text">
-                  <span className="row-title">{pack.name}</span>
-                  <span className="meta">{pack.about}</span>
-                </div>
-                {missing.length ? (
-                  <button className="button" onClick={() => add(missing)}>Add {missing.length}</button>
-                ) : (
-                  <span className="quiet">Added</span>
-                )}
-              </li>
+              <div key={pack.name} className="pack">
+                <span className="name">{pack.name}</span>
+                {missing.length ? <button className="btn accent" onClick={() => add(missing)}>Follow {missing.length}</button> : <span className="value" style={{ color: "var(--text-2)" }}>Following</span>}
+                <span className="about">{pack.about}</span>
+                <span className="stack-avatars">{pack.channels.slice(0, 7).map((c) => <Avatar key={c.id} id={c.id} title={c.title} size={30} />)}</span>
+              </div>
             );
           })}
-        </ul>
-      </section>
+        </div>
 
-      <section>
-        <h2 className="label">Import YouTube subscriptions</h2>
+        <div className="section-head"><h2>Import from YouTube</h2></div>
         <ol className="steps">
-          <li>
-            Open <a href="https://takeout.google.com/" target="_blank" rel="noreferrer">Google Takeout</a>, click “Deselect all”, then
-            tick <b>YouTube and YouTube Music</b>.
-          </li>
-          <li>Under “All YouTube data included”, keep only <b>subscriptions</b>. Export and download.</li>
-          <li>Choose the <code>subscriptions.csv</code> file from the download:</li>
+          <li>Open <a href="https://takeout.google.com/" target="_blank" rel="noreferrer">Google Takeout</a>, choose <b>Deselect all</b>, then select <b>YouTube and YouTube Music</b>.</li>
+          <li>Under <b>All YouTube data included</b>, keep only <b>subscriptions</b>, then export.</li>
+          <li>Choose <b>subscriptions.csv</b> from the download.</li>
         </ol>
+        <div className="page" style={{ marginTop: 12 }}>
+          <button className="btn" onClick={() => takeout.current?.click()}><Icon name="download" size={18} /> Choose subscriptions.csv</button>
+        </div>
         <input
           ref={takeout}
           type="file"
           accept=".csv,text/csv,text/plain"
           hidden
-          onChange={() =>
-            readFile(takeout.current, (text) => {
-              const found = parseSubscriptions(text);
-              if (found.length) add(found);
-              else setMessage("No channels found in that file.");
-            })
-          }
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            const found = parseSubscriptions(await file.text());
+            if (found.length) add(found);
+            else toast("No channels found in that file");
+          }}
         />
-        <button className="button" onClick={() => takeout.current?.click()}>Choose subscriptions.csv</button>
-      </section>
-
-      <section>
-        <h2 className="label">Settings</h2>
-        <div className="setting">
-          <span>Filter rules and their history</span>
-          <button className="button" onClick={onRules}>Open</button>
-        </div>
-        <div className="setting">
-          <span>Tapping a video should</span>
-          <Segmented value={settings.mode} options={[["listen", "Listen"], ["watch", "Watch"]]} onChange={(mode) => updateSettings({ mode })} />
-        </div>
-        <label className="setting">
-          <span>When the screen locks mid-video, keep playing as audio</span>
-          <input type="checkbox" className="switch" checked={settings.continueOnLock} onChange={(e) => updateSettings({ continueOnLock: e.target.checked })} />
-        </label>
-        <div className="setting">
-          <span>Thumbnails</span>
-          <Segmented value={settings.frames ? "on" : "off"} options={[["on", "Frames"], ["off", "Off"]]} onChange={(v) => updateSettings({ frames: v === "on" })} />
-        </div>
-        <div className="setting">
-          <span>Theme</span>
-          <Segmented value={settings.theme} options={[["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]]} onChange={(theme) => updateSettings({ theme })} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="label">Backup</h2>
-        <p className="quiet">Everything lives on this device. Move it to another one with a backup file.</p>
-        <div className="actions">
-          <button
-            className="button"
-            onClick={() => {
-              const url = URL.createObjectURL(new Blob([exportData()], { type: "application/json" }));
-              const a = Object.assign(document.createElement("a"), { href: url, download: `longform-${new Date().toISOString().slice(0, 10)}.json` });
-              a.click();
-              setTimeout(() => URL.revokeObjectURL(url), 1000);
-            }}
-          >
-            Export
-          </button>
-          <input
-            ref={backup}
-            type="file"
-            accept=".json,application/json"
-            hidden
-            onChange={() =>
-              readFile(backup.current, (text) => {
-                try {
-                  importData(text);
-                  setMessage("Backup restored.");
-                  refreshFeeds(true);
-                } catch (error) {
-                  setMessage((error as Error).message || "That file isn’t a Longform backup.");
-                }
-              })
-            }
-          />
-          <button className="button" onClick={() => backup.current?.click()}>Import</button>
-        </div>
-      </section>
-
-      <footer className="end">
-        <p>
-          Longform is open source. <a href={REPO_URL} target="_blank" rel="noreferrer">Read the code</a>, including the{" "}
-          <a href={`${REPO_URL}/blob/main/src/lib/filter.ts`} target="_blank" rel="noreferrer">whole filter</a>.
-        </p>
-      </footer>
+      </div>
     </div>
   );
 }

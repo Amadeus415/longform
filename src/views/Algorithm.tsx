@@ -1,156 +1,199 @@
 import { useMemo, useState, type KeyboardEvent } from "react";
-import { describeChanges, normalizeRules, type RuleKey, type Rules } from "../lib/filter";
+import { applyRules, describeChanges, DEFAULT_RULES, normalizeRules, type Hidden, type RuleKey, type Rules } from "../lib/filter";
 import { play } from "../lib/player";
 import { commitRules, currentRules, restoreVersion, useStore } from "../lib/store";
 import { useFeed } from "../lib/useFeed";
-import { Icon, REPO_URL, Segmented, Sheet, ago } from "./ui";
+import { Frame, Icon, REPO_URL, Sheet, Toggle, ago, showActions, toast } from "./ui";
 
-export type Tab = "rules" | "hidden" | "history";
+const RULE_LABELS: Record<RuleKey, string> = {
+  minMinutes: "Too short",
+  maxMinutes: "Too long",
+  maxAgeDays: "Too old",
+  hideWords: "Hidden words",
+  allowWords: "Always shown",
+  hideFinished: "Finished",
+};
+const RULE_ORDER: RuleKey[] = ["minMinutes", "maxMinutes", "maxAgeDays", "hideWords", "hideFinished"];
 
-export function Algorithm({ tab, onTab, onClose }: { tab: Tab; onTab: (t: Tab) => void; onClose: () => void }) {
-  const store = useStore();
-  const { hidden } = useFeed();
-  const latest = store.history[store.history.length - 1];
+const MIN_PRESETS = [0, 10, 20, 30, 45, 60, 90];
+const MAX_PRESETS = [0, 60, 120, 180, 240];
+const AGE_PRESETS: [number, string][] = [[0, "Any time"], [7, "Week"], [30, "Month"], [90, "3 months"], [365, "Year"]];
 
-  return (
-    <Sheet onClose={onClose} label="Your algorithm" tall>
-      <header className="sheet-head">
-        <h2>Your algorithm</h2>
-        <button className="icon-button" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
-      </header>
-      <Segmented
-        value={tab}
-        onChange={onTab}
-        options={[["rules", "Rules"], ["hidden", `Hidden · ${hidden.length}`], ["history", `History · v${latest.v}`]]}
-      />
-      <div className="sheet-body">
-        {tab === "rules" && <RulesEditor key={latest.v} saved={currentRules(store)} />}
-        {tab === "hidden" && <HiddenList onEditRules={() => onTab("rules")} />}
-        {tab === "history" && <History />}
-      </div>
-    </Sheet>
-  );
-}
+const minutesLabel = (m: number) => (m === 0 ? "Off" : m % 60 === 0 && m >= 60 ? `${m / 60}h` : `${m}m`);
 
-function RulesEditor({ saved }: { saved: Rules }) {
+export function Algorithm() {
+  const history = useStore((s) => s.history);
+  const saved = currentRules({ history } as never);
+  const latest = history[history.length - 1];
   const [draft, setDraft] = useState<Rules>(saved);
   const [note, setNote] = useState("");
-  const [json, setJson] = useState<string | null>(null);
-  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [sheet, setSheet] = useState<null | { kind: "hidden"; rule?: RuleKey } | { kind: "diff" } | { kind: "json" }>(null);
+  const [focus, setFocus] = useState<RuleKey | "shown" | null>(null);
+
+  // Saving or restoring elsewhere replaces the draft.
+  const [seenVersion, setSeenVersion] = useState(latest.v);
+  if (seenVersion !== latest.v) {
+    setSeenVersion(latest.v);
+    setDraft(saved);
+  }
+
+  const { all, finishedIds, channelsCount } = useFeedBasics();
+  const now = Date.now();
+  const before = useMemo(() => applyRules(all, saved, { now, finished: finishedIds }), [all, saved, finishedIds]);
+  const after = useMemo(() => applyRules(all, draft, { now, finished: finishedIds }), [all, draft, finishedIds]);
   const changes = useMemo(() => describeChanges(saved, draft), [saved, draft]);
-  const now = useFeed();
-  const next = useFeed(draft);
-  const { history } = useStore();
-  const nextVersion = history[history.length - 1].v + 1;
   const edit = (patch: Partial<Rules>) => setDraft((d) => ({ ...d, ...patch }));
 
-  const apply = () => {
-    if (commitRules(draft, note)) setNote("");
+  const counts = new Map<RuleKey, number>();
+  for (const h of after.hidden) counts.set(h.rule, (counts.get(h.rule) ?? 0) + 1);
+  const total = after.shown.length + after.hidden.length;
+
+  const save = () => {
+    if (commitRules(draft, note)) {
+      setNote("");
+      toast(`Saved as v${latest.v + 1}`);
+    }
   };
 
+  const more = () =>
+    showActions({
+      title: "Algorithm",
+      actions: [
+        { icon: "code", label: "Edit as JSON", run: () => setSheet({ kind: "json" }) },
+        { icon: "external", label: "Read the code behind it", run: () => window.open(`${REPO_URL}/blob/main/src/lib/filter.ts`, "_blank") },
+        { icon: "restore", label: "Start from default rules", run: () => setDraft(DEFAULT_RULES) },
+      ],
+    });
+
   return (
-    <div className="rules">
-      <p className="quiet">
-        Every video from your channels is shown, newest first, unless one of these rules hides it. Nothing else decides
-        what you see.
-      </p>
+    <div className="view">
+      <div className="narrow">
+      <header className="large-title">
+        <div>
+          <h1>Algorithm</h1>
+          <p className="subtitle">Version {latest.v}, saved {ago(new Date(latest.at).toISOString()).toLowerCase()}</p>
+        </div>
+        <button className="icon-btn" onClick={more} aria-label="More"><Icon name="more" /></button>
+      </header>
 
-      <div className="rule locked">
-        <span>Shorts and live streams are never fetched.</span>
+      <section className="funnel" aria-label="What your rules do">
+        <div className="funnel-head">
+          <span className="big">{after.shown.length}</span>
+          <span className="of">of {total} videos from {channelsCount} channels make your feed</span>
+        </div>
+        <div className={`stack${focus ? " focus" : ""}`} role="img" aria-label={`${after.shown.length} shown, ${after.hidden.length} hidden`}>
+          {after.shown.length > 0 && <span className={`shown${focus === "shown" ? " focused" : ""}`} style={{ flexGrow: after.shown.length }} />}
+          {RULE_ORDER.filter((r) => counts.get(r)).map((r) => (
+            <span key={r} className={focus === r ? "focused" : ""} style={{ flexGrow: counts.get(r) }} />
+          ))}
+        </div>
+        <ul className="legend">
+          <li>
+            <button onPointerEnter={() => setFocus("shown")} onPointerLeave={() => setFocus(null)} onClick={() => setFocus(focus === "shown" ? null : "shown")}>
+              <span className="sw shown" /><span className="lbl">In your feed</span><span className="num">{after.shown.length}</span>
+            </button>
+          </li>
+          {RULE_ORDER.filter((r) => counts.get(r)).map((r) => (
+            <li key={r}>
+              <button onPointerEnter={() => setFocus(r)} onPointerLeave={() => setFocus(null)} onClick={() => setSheet({ kind: "hidden", rule: r })}>
+                <span className="sw" /><span className="lbl">{RULE_LABELS[r]}</span><span className="num">{counts.get(r)}</span>
+                <Icon name="right" size={16} />
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="funnel-foot">Shorts and live streams are never fetched. Everything else is shown newest first unless a rule hides it.</p>
+      </section>
+
+      <div className="section-head"><h2>Rules</h2></div>
+      <div className="group">
+        <PresetRule label="Shortest video" value={minutesLabel(draft.minMinutes)} presets={MIN_PRESETS.map((m) => [m, minutesLabel(m)])} current={draft.minMinutes} onPick={(minMinutes) => edit({ minMinutes })} />
+        <PresetRule label="Longest video" value={minutesLabel(draft.maxMinutes)} presets={MAX_PRESETS.map((m) => [m, minutesLabel(m)])} current={draft.maxMinutes} onPick={(maxMinutes) => edit({ maxMinutes })} />
+        <PresetRule label="Published within" value={AGE_PRESETS.find(([d]) => d === draft.maxAgeDays)?.[1] ?? `${draft.maxAgeDays} days`} presets={AGE_PRESETS} current={draft.maxAgeDays} onPick={(maxAgeDays) => edit({ maxAgeDays })} />
+        <div className="rule-block inline">
+          <div className="head"><b>Hide videos I’ve finished</b></div>
+          <Toggle checked={draft.hideFinished} onChange={(hideFinished) => edit({ hideFinished })} label="Hide videos I’ve finished" />
+        </div>
       </div>
 
-      <label className="rule">
-        <span>Hide videos shorter than</span>
-        <NumberInput value={draft.minMinutes} onChange={(minMinutes) => edit({ minMinutes })} />
-        <span>min</span>
-      </label>
-      <label className="rule">
-        <span>Hide videos longer than</span>
-        <NumberInput value={draft.maxMinutes} onChange={(maxMinutes) => edit({ maxMinutes })} />
-        <span>min</span>
-      </label>
-      <label className="rule">
-        <span>Hide videos older than</span>
-        <NumberInput value={draft.maxAgeDays} onChange={(maxAgeDays) => edit({ maxAgeDays })} />
-        <span>days</span>
-      </label>
-
-      <div className="rule column">
-        <span>Hide titles containing</span>
-        <Words words={draft.hideWords} onChange={(hideWords) => edit({ hideWords })} placeholder="Add word or phrase…" />
+      <div className="section-head"><h2>Words</h2></div>
+      <div className="group">
+        <div className="rule-block">
+          <div className="head"><b>Hide titles with</b><span>{draft.hideWords.length}</span></div>
+          <Words words={draft.hideWords} onChange={(hideWords) => edit({ hideWords })} placeholder="Add a word or phrase" />
+        </div>
+        <div className="rule-block">
+          <div className="head"><b>Unless they also have</b><span>{draft.allowWords.length || ""}</span></div>
+          <Words words={draft.allowWords} onChange={(allowWords) => edit({ allowWords })} placeholder="For example: lecture" />
+        </div>
       </div>
-      <div className="rule column">
-        <span>…unless the title also contains</span>
-        <Words words={draft.allowWords} onChange={(allowWords) => edit({ allowWords })} placeholder="Add word, e.g. lecture" />
-      </div>
-
-      <label className="rule">
-        <span className="grow">Hide videos I’ve finished</span>
-        <input type="checkbox" className="switch" checked={draft.hideFinished} onChange={(e) => edit({ hideFinished: e.target.checked })} />
-      </label>
-
-      <p className="quiet small">
-        Words match whole words, ignoring case: “clip” hides “Best clip” but not “eclipse”. End a word with * to match its
-        start: “react*” also hides “reaction”. Empty or 0 turns a limit off.
+      <p className="group-note" style={{ margin: "8px 28px 0", color: "var(--text-2)", fontSize: 13 }}>
+        Whole words, any case: “clip” hides “Best clip” but not “eclipse”. End with * to match the start of a word.
       </p>
 
-      <details className="json" onToggle={(e) => setJson((e.target as HTMLDetailsElement).open ? JSON.stringify(draft, null, 2) : null)}>
-        <summary>Edit as JSON</summary>
-        {json !== null && (
-          <>
-            <textarea
-              value={json}
-              spellCheck={false}
-              rows={14}
-              onChange={(e) => {
-                setJson(e.target.value);
-                try {
-                  setDraft(normalizeRules(JSON.parse(e.target.value)));
-                  setJsonError(null);
-                } catch {
-                  setJsonError("Not valid JSON yet.");
-                }
-              }}
-            />
-            {jsonError && <p className="error small">{jsonError}</p>}
-          </>
-        )}
-      </details>
+      <div className="section-head"><h2>History</h2></div>
+      <ol className="timeline">
+        {[...history].reverse().map((h) => (
+          <li key={h.v} className={h.v === latest.v ? "current" : ""}>
+            <span className="dot" />
+            <div className="when">
+              <b>v{h.v}</b>
+              <span>{new Date(h.at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+              {h.v === latest.v ? <span className="tag">Current</span> : <button className="restore" onClick={() => (restoreVersion(h.v), toast(`Restored v${h.v} as v${latest.v + 1}`))}>Restore</button>}
+            </div>
+            <ul className="changes">{h.changes.map((c) => <li key={c}>{c}</li>)}</ul>
+            {h.note && <p className="note">“{h.note}”</p>}
+          </li>
+        ))}
+      </ol>
 
-      <p className="quiet small">
-        This is the entire algorithm: <a href={`${REPO_URL}/blob/main/src/lib/filter.ts`} target="_blank" rel="noreferrer">filter.ts</a>.
-      </p>
+      </div>
 
       {changes.length > 0 && (
-        <div className="apply">
-          <ul className="changes">
-            {changes.map((c) => <li key={c}>{c}</li>)}
-          </ul>
-          <p className="small">
-            Your feed goes from {now.shown.length} to <b>{next.shown.length}</b> videos.
-          </p>
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why? (optional, saved in history)" />
-          <div className="actions">
-            <button className="button primary" onClick={apply}>Save as v{nextVersion}</button>
-            <button className="button" onClick={() => setDraft(saved)}>Discard</button>
+        <div className="savebar glass" role="region" aria-label="Unsaved changes">
+          <div className="summary">{changes.join(" · ")}</div>
+          <label className="field">
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Why this change? (optional)" />
+          </label>
+          <div className="buttons">
+            <button className="btn" onClick={() => setDraft(saved)}>Discard</button>
+            <button className="delta" onClick={() => setSheet({ kind: "diff" })} aria-label="Preview which videos change">
+              {before.shown.length} → <b>{after.shown.length}</b> videos <Icon name="right" size={16} />
+            </button>
+            <button className="btn accent" onClick={save}>Save v{latest.v + 1}</button>
           </div>
         </div>
       )}
+
+      {sheet?.kind === "hidden" && <HiddenSheet hidden={after.hidden} rule={sheet.rule} onClose={() => setSheet(null)} />}
+      {sheet?.kind === "diff" && <DiffSheet before={before} after={after} onClose={() => setSheet(null)} />}
+      {sheet?.kind === "json" && <JsonSheet rules={draft} onApply={(r) => (setDraft(r), setSheet(null))} onClose={() => setSheet(null)} />}
     </div>
   );
 }
 
-function NumberInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+function useFeedBasics() {
+  const { all } = useFeed();
+  const progress = useStore((s) => s.progress);
+  const channelsCount = useStore((s) => s.channels.length);
+  const finishedIds = useMemo(() => new Set(Object.values(progress).filter((p) => p.done).map((p) => p.video.id)), [progress]);
+  return { all, finishedIds, channelsCount };
+}
+
+function PresetRule({ label, value, presets, current, onPick }: { label: string; value: string; presets: [number, string][]; current: number; onPick: (n: number) => void }) {
+  const custom = !presets.some(([n]) => n === current);
   return (
-    <input
-      className="number"
-      type="number"
-      inputMode="numeric"
-      min={0}
-      value={value || ""}
-      placeholder="off"
-      onChange={(e) => onChange(Math.max(0, Math.round(Number(e.target.value) || 0)))}
-    />
+    <div className="rule-block">
+      <div className="head"><b>{label}</b><span>{value}</span></div>
+      <div className="chips" role="radiogroup" aria-label={label}>
+        {custom && <button className="chip small on" role="radio" aria-checked>{value}</button>}
+        {presets.map(([n, text]) => (
+          <button key={n} className={`chip small press${n === current ? " on" : ""}`} role="radio" aria-checked={n === current} onClick={() => onPick(n)}>
+            {text}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -165,90 +208,117 @@ function Words({ words, onChange, placeholder }: { words: string[]; onChange: (w
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       add();
-    } else if (e.key === "Backspace" && !text && words.length) onChange(words.slice(0, -1));
+    }
   };
   return (
-    <div className="words">
-      {words.map((w) => (
-        <button key={w} className="chip" onClick={() => onChange(words.filter((x) => x !== w))} aria-label={`Remove ${w}`}>
-          {w} <span aria-hidden="true">×</span>
-        </button>
-      ))}
-      <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} onBlur={add} placeholder={placeholder} enterKeyHint="done" />
-    </div>
-  );
-}
-
-const RULE_NAMES: Partial<Record<RuleKey, string>> = {
-  minMinutes: "Too short",
-  maxMinutes: "Too long",
-  maxAgeDays: "Too old",
-  hideWords: "Words",
-  hideFinished: "Finished",
-};
-
-function HiddenList({ onEditRules }: { onEditRules: () => void }) {
-  const { hidden } = useFeed();
-  const [only, setOnly] = useState<RuleKey | null>(null);
-  const counts = new Map<RuleKey, number>();
-  for (const h of hidden) counts.set(h.rule, (counts.get(h.rule) ?? 0) + 1);
-  const list = only ? hidden.filter((h) => h.rule === only) : hidden;
-
-  if (!hidden.length) return <p className="quiet center">Nothing is hidden right now.</p>;
-
-  return (
-    <div>
-      <p className="quiet small">
-        Each video shows the rule that hid it. Tap one to play it anyway, or{" "}
-        <button className="link" onClick={onEditRules}>change the rules</button>.
-      </p>
-      {counts.size > 1 && (
+    <>
+      {words.length > 0 && (
         <div className="words">
-          <button className={`chip${only ? "" : " on"}`} onClick={() => setOnly(null)}>All {hidden.length}</button>
-          {[...counts].map(([rule, n]) => (
-            <button key={rule} className={`chip${only === rule ? " on" : ""}`} onClick={() => setOnly(rule)}>
-              {RULE_NAMES[rule] ?? rule} {n}
+          {words.map((w) => (
+            <button key={w} className="word press" onClick={() => onChange(words.filter((x) => x !== w))} aria-label={`Remove ${w}`}>
+              {w} <Icon name="close" size={14} />
             </button>
           ))}
         </div>
       )}
-      <ul className="list">
-        {list.map(({ video, reason }) => (
-          <li key={video.id}>
-            <button className="row" onClick={() => play(video)} title="Play anyway">
-              <div className="row-text">
-                <span className="row-title">{video.title}</span>
-                <span className="meta">{video.channel} · {ago(video.published)}</span>
-                <span className="reason">{reason}</span>
-              </div>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+      <label className="field word-input">
+        <Icon name="plus" size={18} />
+        <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={onKey} onBlur={add} placeholder={placeholder} enterKeyHint="done" autoCapitalize="off" />
+      </label>
+    </>
   );
 }
 
-function History() {
-  const { history } = useStore();
-  const latest = history[history.length - 1].v;
+function HiddenSheet({ hidden, rule, onClose }: { hidden: Hidden[]; rule?: RuleKey; onClose: () => void }) {
+  const [only, setOnly] = useState<RuleKey | undefined>(rule);
+  const rules = [...new Set(hidden.map((h) => h.rule))];
+  const list = only ? hidden.filter((h) => h.rule === only) : hidden;
   return (
-    <ol className="history">
-      {[...history].reverse().map((h) => (
-        <li key={h.v}>
-          <div className="history-head">
-            <b>v{h.v}</b>
-            <span className="meta">{new Date(h.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</span>
-            {h.v === latest ? (
-              <span className="current">current</span>
-            ) : (
-              <button className="link" onClick={() => restoreVersion(h.v)}>Restore</button>
-            )}
+    <Sheet onClose={onClose} label="Hidden videos" full>
+      <div className="sheet-title"><h2>Hidden by your rules</h2></div>
+      {rules.length > 1 && (
+        <div className="chips">
+          <button className={`chip small${only ? "" : " on"}`} onClick={() => setOnly(undefined)}>All {hidden.length}</button>
+          {rules.map((r) => (
+            <button key={r} className={`chip small${only === r ? " on" : ""}`} onClick={() => setOnly(r)}>
+              {RULE_LABELS[r]} {hidden.filter((h) => h.rule === r).length}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="group-note" style={{ margin: "0 16px 8px", color: "var(--text-2)", fontSize: 13 }}>Tap a video to play it anyway.</p>
+      {list.map(({ video, reason }) => (
+        <button key={video.id} className="compact" onClick={() => (onClose(), play(video))}>
+          <div className="media"><Frame id={video.id} size="medium" /></div>
+          <div style={{ minWidth: 0 }}>
+            <div className="t">{video.title}</div>
+            <div className="s">{video.channel} · {ago(video.published)}</div>
+            <span className="why"><Icon name="eyeOff" size={13} /> {reason}</span>
           </div>
-          <ul className="changes">{h.changes.map((c) => <li key={c}>{c}</li>)}</ul>
-          {h.note && <p className="history-note">“{h.note}”</p>}
-        </li>
+        </button>
       ))}
-    </ol>
+    </Sheet>
+  );
+}
+
+function DiffSheet({ before, after, onClose }: { before: ReturnType<typeof applyRules>; after: ReturnType<typeof applyRules>; onClose: () => void }) {
+  const wasShown = new Set(before.shown.map((v) => v.id));
+  const isShown = new Set(after.shown.map((v) => v.id));
+  const nowHidden = after.hidden.filter((h) => wasShown.has(h.video.id));
+  const nowShown = after.shown.filter((v) => !wasShown.has(v.id));
+  return (
+    <Sheet onClose={onClose} label="What changes" full>
+      <div className="sheet-title"><h2>What this change does</h2></div>
+      {!nowHidden.length && !nowShown.length && <p className="empty">Your feed stays exactly the same.</p>}
+      {nowShown.length > 0 && <div className="search-section">Added to your feed · {nowShown.length}</div>}
+      {nowShown.map((v) => (
+        <div key={v.id} className="compact">
+          <div className="media"><Frame id={v.id} size="medium" /></div>
+          <div style={{ minWidth: 0 }}>
+            <div className="t">{v.title}</div>
+            <div className="s">{v.channel}</div>
+            <span className="why added"><Icon name="plus" size={13} /> Will show</span>
+          </div>
+        </div>
+      ))}
+      {nowHidden.length > 0 && <div className="search-section">Removed from your feed · {nowHidden.length}</div>}
+      {nowHidden.filter((h) => !isShown.has(h.video.id)).map(({ video, reason }) => (
+        <div key={video.id} className="compact">
+          <div className="media"><Frame id={video.id} size="medium" /></div>
+          <div style={{ minWidth: 0 }}>
+            <div className="t">{video.title}</div>
+            <div className="s">{video.channel}</div>
+            <span className="why"><Icon name="eyeOff" size={13} /> {reason}</span>
+          </div>
+        </div>
+      ))}
+    </Sheet>
+  );
+}
+
+function JsonSheet({ rules, onApply, onClose }: { rules: Rules; onApply: (r: Rules) => void; onClose: () => void }) {
+  const [text, setText] = useState(JSON.stringify(rules, null, 2));
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <Sheet onClose={onClose} label="Edit as JSON" full>
+      <div className="sheet-title">
+        <h2>Edit as JSON</h2>
+        <button
+          className="btn accent"
+          onClick={() => {
+            try {
+              onApply(normalizeRules(JSON.parse(text)));
+            } catch {
+              setError("That isn’t valid JSON yet. Check for a missing comma or quote.");
+            }
+          }}
+        >
+          Apply
+        </button>
+      </div>
+      <textarea className="json-edit" value={text} spellCheck={false} onChange={(e) => (setText(e.target.value), setError(null))} data-nodrag />
+      {error && <p className="group-note" style={{ margin: "8px 16px", color: "var(--danger)" }}>{error}</p>}
+      <p className="group-note" style={{ margin: "8px 16px", color: "var(--text-2)", fontSize: 13 }}>Applying puts these rules in the draft. Nothing changes until you save.</p>
+    </Sheet>
   );
 }
