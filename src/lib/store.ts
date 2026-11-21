@@ -64,7 +64,9 @@ let state: State = {
 
 const listeners = new Set<() => void>();
 const dirty = new Set<keyof State>();
-let saveTimer: ReturnType<typeof setTimeout> | undefined;
+// Save the default rules once, so v1 keeps the date you first opened the app.
+if (typeof localStorage !== "undefined" && !localStorage.getItem(PREFIX + "history")) dirty.add("history");
+let saveTimer: ReturnType<typeof setTimeout> | undefined = dirty.size ? setTimeout(() => save(), 300) : undefined;
 
 function save() {
   saveTimer = undefined;

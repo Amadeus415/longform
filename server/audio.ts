@@ -56,7 +56,8 @@ export async function audioResponse(request: Request, id: string): Promise<Respo
   try {
     stream = await resolve(id);
   } catch (error) {
-    console.error(`[audio] ${id}: ${(error as Error).message.split("\n")[0]}`);
+    const missing = (error as NodeJS.ErrnoException).code === "ENOENT";
+    console.error(`[audio] ${id}: ${missing ? "yt-dlp is not installed (brew install yt-dlp)" : (error as Error).message.split("\n")[0]}`);
     return new Response("Audio unavailable for this video", { status: 502 });
   }
 
