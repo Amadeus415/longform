@@ -1,23 +1,25 @@
 # Longform
 
-**Your YouTube, long-form only.** A minimalist, open-source feed of the channels you choose: no Shorts, no clickbait, no infinite scroll. A filter you can read, change, and roll back. Podcasts keep playing when your phone is locked.
+**Your YouTube, long-form only.** An open-source feed of the channels you choose, with the polish of a modern media app and none of the slot machine: no Shorts, no clickbait thumbnails, no infinite scroll. Your algorithm is a handful of rules you can read, change, preview, and roll back. Podcasts keep playing when your phone is locked.
 
 <p>
-  <img src="docs/screenshots/feed.png" width="220" alt="The feed: a single column of long-form videos with mid-video frames instead of thumbnails">
-  <img src="docs/screenshots/player.png" width="220" alt="The player in Listen mode, with chapters">
-  <img src="docs/screenshots/rules.png" width="220" alt="The algorithm sheet: rules written as sentences">
+  <img src="docs/screenshots/feed.png" width="200" alt="The feed: full-width cards with a frame from the middle of each video, channel avatars, and length chips">
+  <img src="docs/screenshots/player.png" width="200" alt="The ambient Now Playing screen in Audio mode, with chapters">
+  <img src="docs/screenshots/algorithm.png" width="200" alt="The Algorithm tab: how many videos make your feed, and why the rest are hidden">
+  <img src="docs/screenshots/library.png" width="200" alt="Library: listening this week, recently played, settings">
 </p>
 
 Inspired by Andrej Karpathy's [HackerTube](https://hackertube.org): account-free, local-first, and it shows a frame from the middle of each video instead of the uploader's attention-optimized thumbnail.
 
 ## What it does
 
-- **Your channels, long-form only.** Add channels by name, @handle, or link; import your YouTube subscriptions from Google Takeout; or start with a curated pack (Podcasts, AI & Tech, Lectures & Science, Business). Shorts and live streams are never fetched.
+- **Your channels, long-form only.** Pick what you want to learn on first launch (Podcasts, AI & Tech, Lectures & Science, Business), follow channels by name, @handle, or link, or import your YouTube subscriptions from Google Takeout. Shorts and live streams are never fetched.
+- **A feed you can finish.** Full-width cards with mid-video frames, a row of your channels (a dot means a new episode), and chips for how much time you have: under 1 hour, 1–2 hours, 2 hours+. The feed ends with "You're all caught up", not more recommendations.
 - **A deterministic filter.** Every video is shown, newest first, unless one of your rules hides it. No ranking, no engagement signals, no ML. The whole algorithm is [`src/lib/filter.ts`](src/lib/filter.ts).
-- **Every change on the record.** Editing rules shows a diff and how many videos it adds or removes before you save. Each save becomes a version (v1, v2, …) with an optional note, and any version can be restored in one tap.
-- **Nothing hidden from you.** The Hidden tab lists every filtered video with the exact reason (`Shorter than 20 min (8:14)`, `Title contains “clips”`). Tap one to play it anyway.
+- **Every change on the record.** The Algorithm tab shows how many of your videos make the feed and which rule hides the rest. As you change a rule, those numbers update live, and before saving you can see exactly which videos it adds or removes. Each save becomes a version (v1, v2, …) with an optional note, and any version can be restored in one tap.
+- **Nothing hidden from you.** Every filtered video lists the exact reason (`Shorter than 20 min (8:14)`, `Title contains “clips”`). Tap one to play it anyway.
 - **Listen or Watch.** Listen streams just the audio through a plain `<audio>` element, so it keeps playing with the screen locked and shows lock-screen controls. Watch uses the official YouTube embed. Switch at any second; if you lock your phone mid-video, it carries on as audio.
-- **Made for long episodes.** Resume where you left off, a Continue section, chapters parsed from descriptions, speed control (1–2×), −15/+30s skips, and Mark as finished to clear a video without playing it to the end.
+- **Made for long episodes.** Resume where you left off (the mini-player reopens with your last episode), chapters parsed from descriptions, speed control (1–2×), −15/+30s skips, Mark as finished, and a weekly listening summary.
 - **Private by design.** No account. Your channels, rules, history, and progress live on your device. Export and import a backup file to move them.
 
 ## The algorithm
@@ -35,9 +37,10 @@ Hide videos I’ve finished [on]
 Words match whole words, ignoring case and accents: `clip` hides “Best clip” but not “eclipse”. End a word with `*` to match its start: `react*` hides “reaction”. Rules are plain JSON, so you can also edit them as text in the app.
 
 <p>
-  <img src="docs/screenshots/hidden.png" width="220" alt="Hidden tab with the reason each video was filtered">
-  <img src="docs/screenshots/history.png" width="220" alt="History tab with versions, diffs, and notes">
-  <img src="docs/screenshots/feed-dark.png" width="220" alt="The feed in dark mode">
+  <img src="docs/screenshots/algorithm-draft.png" width="200" alt="Changing a rule: the feed count updates live and a save bar shows the change">
+  <img src="docs/screenshots/change-preview.png" width="200" alt="Preview of exactly which videos a rule change removes, and why">
+  <img src="docs/screenshots/actions.png" width="200" alt="The actions for a video: listen, watch, mark as finished, open in YouTube, unfollow">
+  <img src="docs/screenshots/feed-dark.png" width="200" alt="The feed in dark mode">
 </p>
 
 ## Put it on your iPhone
@@ -86,11 +89,12 @@ applyRules(videos, rules) → feed             └ YouTube RSS of the channel's 
                                              └ yt-dlp finds the AAC audio stream; the server relays it
                                                with HTTP Range support so Safari can seek
 YouTube IFrame player (Watch)                GET /api/channels/find?q=  (name, @handle, or link)
+<img src="/api/avatar/:id">                  GET /api/avatar/:id  (cached by the server, once a day)
 ```
 
 - **No API key, no account.** Channel feeds come from YouTube's public RSS, which has exact publish dates and descriptions. Lengths come from one request per channel. Responses are identical for every user, so a CDN can cache them (`Cache-Control: s-maxage=900`).
 - **Audio.** A fresh YouTube stream URL only works a few seconds after it is issued, and asking too early breaks it for good, so the server waits exactly as yt-dlp does. It relays bytes in 8 MB chunks because YouTube throttles larger ranges. The feed warms the two most likely next plays, so pressing play is instant.
-- **The app** is React + Vite with no router or state library, about 1,800 lines of TypeScript plus one stylesheet. The server is [Hono](https://hono.dev) on Node, under 400 lines.
+- **The app** is React + Vite with no router or state library, about 2,800 lines of TypeScript plus one stylesheet, with no UI library. The server is [Hono](https://hono.dev) on Node, under 500 lines.
 
 ## Roadmap
 
