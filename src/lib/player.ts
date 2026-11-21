@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { getState, resumePoint, saveProgress, updateSettings } from "./store";
+import { addListened, getState, resumePoint, saveProgress, updateSettings } from "./store";
 import type { Video } from "./types";
 
 // One player for the whole app, living outside React so audio never stops when views change.
@@ -75,6 +75,7 @@ export function embedTick(): void {
   const duration = embed.getDuration() || ps.duration;
   if (ps.playing) embedPlayingAt = Date.now();
   set({ time, duration });
+  countListening();
   persistEvery();
 }
 
@@ -108,6 +109,7 @@ if (audio) {
   audio.addEventListener("timeupdate", () => {
     if (!listening() || pendingSeek !== null) return;
     set({ time: audio.currentTime });
+    countListening();
     persistEvery();
     updatePosition();
   });
@@ -280,6 +282,13 @@ export function currentTime(): number {
   return ps.time;
 }
 
+/** Put the last thing you played back in the mini-player (paused), the way music apps reopen. */
+export function restore(video: Video, at: number, duration: number): void {
+  if (ps.video) return;
+  set({ video, mode: "listen", time: at, duration, playing: false, loading: false, expanded: false });
+  setMetadata(video);
+}
+
 /** Ask the server to look up a video's audio stream now, so pressing play later is instant. */
 export function warm(id: string): void {
   fetch(`${audioSrc(id)}/warm`, { method: "POST" }).catch(() => {});
@@ -287,8 +296,22 @@ export function warm(id: string): void {
 
 // ---------- progress ----------
 
+// Real time spent playing, flushed to the store in batches so the app doesn't re-render on every tick.
+let tickAt = 0;
+let unsaved = 0;
+function countListening(): void {
+  const now = Date.now();
+  if (ps.playing && tickAt && now - tickAt < 3000) unsaved += (now - tickAt) / 1000;
+  tickAt = now;
+  if (unsaved >= 15 || (!ps.playing && unsaved > 0)) {
+    addListened(unsaved);
+    unsaved = 0;
+  }
+}
+
 let lastSaved = 0;
 function persist(): void {
+  countListening();
   if (!ps.video) return;
   const t = currentTime();
   const d = ps.duration || ps.video.seconds || 0;

@@ -28,6 +28,8 @@ export type State = {
   progress: Record<string, Progress>;
   settings: Settings;
   feeds: Record<string, ChannelFeed>;
+  /** Seconds listened or watched per local day ("2026-11-20"), for the weekly summary. */
+  listened: Record<string, number>;
 };
 
 const PREFIX = "longform.";
@@ -39,6 +41,7 @@ const DEFAULTS: State = {
   progress: {},
   settings: { mode: isPhone ? "listen" : "watch", frames: true, theme: "auto", rate: 1, continueOnLock: true },
   feeds: {},
+  listened: {},
 };
 
 function load<K extends keyof State>(key: K): State[K] {
@@ -60,6 +63,7 @@ let state: State = {
   progress: load("progress"),
   settings: load("settings"),
   feeds: load("feeds"),
+  listened: load("listened"),
 };
 
 const listeners = new Set<() => void>();
@@ -95,10 +99,11 @@ export function setState(patch: Partial<State> | ((s: State) => Partial<State>))
 
 if (typeof window !== "undefined") window.addEventListener("pagehide", () => dirty.size && save());
 
-export function useStore(): State {
+/** Subscribe to the store. Pass a selector to re-render only when that slice changes. */
+export function useStore<T = State>(select: (s: State) => T = (s) => s as T): T {
   return useSyncExternalStore(
     (listener) => (listeners.add(listener), () => listeners.delete(listener)),
-    () => state,
+    () => select(state),
   );
 }
 
@@ -152,6 +157,17 @@ export function saveProgress(video: Video, t: number, d: number): void {
   setState((s) => ({
     progress: { ...s.progress, [id]: { t: done ? d : t, d, at: Date.now(), done, video: { id, title, channel, channelId, seconds, published } } },
   }));
+}
+
+export function dayKey(date = new Date()): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+/** Count real time spent with a video toward today's total. */
+export function addListened(seconds: number): void {
+  if (!(seconds > 0) || seconds > 3600) return;
+  const key = dayKey();
+  setState((s) => ({ listened: { ...s.listened, [key]: (s.listened[key] ?? 0) + seconds } }));
 }
 
 export function resumePoint(id: string): number {
