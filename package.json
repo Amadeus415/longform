@@ -1,0 +1,41 @@
+{
+  "name": "longform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your YouTube, long-form only. A minimalist, open-source feed with a deterministic filter you control.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"tsx watch server/index.ts\" \"vite\"",
+    "build": "vite build",
+    "start": "vite build && NODE_ENV=production tsx server/index.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.11",
+    "fast-xml-parser": "^5.12.1",
+    "hono": "^4.13.19",
+    "tsx": "^4.23.15",
+    "youtubei.js": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "concurrently": "^10.0.7",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Amadeus415/longform"
+  }
+}
