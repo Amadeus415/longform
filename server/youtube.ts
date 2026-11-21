@@ -2,7 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 import { Innertube } from "youtubei.js";
 import { parseChapters } from "../src/lib/chapters.ts";
 import type { ChannelFeed, ChannelHit, Video } from "../src/lib/types.ts";
-import { cached } from "./cache.ts";
+import { cached, remember } from "./cache.ts";
 
 const CHANNEL_ID = /^UC[\w-]{22}$/;
 const FEED_TTL = 15 * 60_000;
@@ -81,6 +81,9 @@ async function fetchRss(channelId: string): Promise<{ title: string; entries: Rs
 
 async function fetchLengths(channelId: string): Promise<Map<string, number>> {
   const channel = await (await yt()).getChannel(channelId);
+  // The same page carries the avatar, so keep it: the app asks for it right after the feed.
+  const avatar = avatarFrom(channel);
+  if (avatar) remember(`avatar:${channelId}`, AVATAR_TTL, avatar);
   const tab = await channel.getVideos();
   const lengths = new Map<string, number>();
   for (const item of (tab as any).videos ?? []) {
@@ -99,6 +102,41 @@ async function fetchLength(videoId: string): Promise<number | null> {
   if (!seconds || info.basic_info.is_live || info.basic_info.is_upcoming) return null;
   lengthCache.set(videoId, seconds);
   return seconds;
+}
+
+/** A channel's avatar, sized for the app (YouTube's image CDN resizes via the "=s<size>" suffix). */
+const AVATAR_TTL = 24 * 60 * 60_000;
+
+export function getChannelAvatar(channelId: string): Promise<string | null> {
+  return cached(`avatar:${channelId}`, AVATAR_TTL, async () => avatarFrom(await (await yt()).getChannel(channelId)));
+}
+
+function avatarFrom(channel: any): string | null {
+  const url = thumbnailFrom(channel?.metadata?.avatar ?? channel?.metadata?.thumbnail);
+  return url ? url.replace(/=s\d+/, "=s176") : null;
+}
+
+/**
+ * The avatar image itself. The server downloads each one once a day and serves it from memory, so
+ * phones never hit Google's image CDN directly (it rate-limits busy addresses).
+ */
+export function getAvatarImage(channelId: string): Promise<{ bytes: ArrayBuffer; type: string } | null> {
+  return cached(`avatar-bytes:${channelId}`, AVATAR_TTL, async () => {
+    const url = await getChannelAvatar(channelId);
+    if (!url) return null;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Avatar returned ${response.status}`); // not cached; retried next time
+    return { bytes: await response.arrayBuffer(), type: response.headers.get("content-type") ?? "image/jpeg" };
+  });
+}
+
+/** Look up avatars ahead of time (a few at once), so first-run screens don't show empty circles. */
+export async function warmAvatars(ids: string[]): Promise<void> {
+  const queue = [...ids];
+  const worker = async () => {
+    for (let id = queue.shift(); id; id = queue.shift()) await getAvatarImage(id).catch(() => null);
+  };
+  await Promise.all(Array.from({ length: 4 }, worker));
 }
 
 /**

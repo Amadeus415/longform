@@ -16,6 +16,12 @@ export function cached<T>(key: string, ttlMs: number, load: () => Promise<T>): P
   return value;
 }
 
+/** Store a value someone already has in hand, unless a fresh one is cached. */
+export function remember<T>(key: string, ttlMs: number, value: T): void {
+  const hit = store.get(key);
+  if (!hit || hit.expires <= Date.now()) store.set(key, { value: Promise.resolve(value), expires: Date.now() + ttlMs });
+}
+
 export function forget(key: string): void {
   store.delete(key);
 }

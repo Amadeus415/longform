@@ -2,7 +2,8 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { audioResponse, warmAudio } from "./audio.ts";
-import { findChannels, getChannelFeed, isChannelId } from "./youtube.ts";
+import { STARTER_PACKS } from "../src/lib/starter.ts";
+import { findChannels, getAvatarImage, getChannelFeed, isChannelId, warmAvatars } from "./youtube.ts";
 
 const app = new Hono();
 
@@ -20,6 +21,15 @@ app.get("/api/channel/:id", async (c) => {
     console.error(`[channel] ${id}: ${(error as Error).message}`);
     return c.json({ error: "Could not load this channel" }, 502);
   }
+});
+
+// A channel's avatar, so the app can use <img src="/api/avatar/UC…"> anywhere.
+app.get("/api/avatar/:id", async (c) => {
+  const id = c.req.param("id");
+  if (!isChannelId(id)) return c.body(null, 400);
+  const image = await getAvatarImage(id).catch(() => null);
+  if (!image) return c.body(null, 404);
+  return c.body(image.bytes, 200, { "Content-Type": image.type, "Cache-Control": "public, max-age=86400" });
 });
 
 app.get("/api/channels/find", async (c) => {
@@ -49,4 +59,5 @@ if (process.env.NODE_ENV === "production") {
 const port = Number(process.env.PORT || 8787);
 serve({ fetch: app.fetch, port, hostname: "0.0.0.0" }, () => {
   console.log(`Longform server on http://localhost:${port}`);
+  warmAvatars(STARTER_PACKS.flatMap((p) => p.channels.map((c) => c.id)));
 });
