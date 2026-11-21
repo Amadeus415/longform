@@ -789,7 +789,7 @@ img { display: block; }
   position: fixed;
   z-index: 25;
   left: 50%;
-  bottom: calc(var(--dock) + var(--tabbar) + var(--mini) + 8px);
+  bottom: calc(var(--dock) + var(--tabbar) + 8px);
   transform: translateX(-50%);
   width: min(560px, calc(100% - 16px));
   padding: 12px;
@@ -800,8 +800,8 @@ img { display: block; }
 .savebar .summary { display: flex; align-items: baseline; gap: 10px; padding: 0 4px 8px; font-size: 13px; color: var(--text-2); }
 .savebar .summary span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .savebar .summary .link { flex: none; font-size: 13px; }
-html.has-draft { --mini: 0px; }
-html.has-draft .mini { display: none; }
+:root.has-draft { --mini: 0px; } /* same specificity as .has-mini and later in the file, so it wins */
+:root.has-draft .mini { display: none; }
 .savebar .field { height: 40px; margin: 0 0 8px; background: color-mix(in srgb, var(--text) 6%, transparent); }
 .savebar .buttons { display: flex; align-items: center; gap: 8px; }
 .savebar .delta { flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px; height: 36px; font-size: 14px; font-weight: 600; color: var(--text-2); border-radius: 999px; }
@@ -910,8 +910,8 @@ html.has-draft .mini { display: none; }
   #root > .app { padding-left: var(--rail); }
   .view { padding-bottom: calc(var(--mini) + 40px); }
   .mini { left: calc(50% + var(--rail) / 2); bottom: 16px; }
-  .savebar { left: calc(50% + var(--rail) / 2); bottom: calc(var(--mini) + 16px); }
-  .toasts { bottom: calc(var(--mini) + 24px); padding-left: var(--rail); }
+  .savebar { left: calc(50% + var(--rail) / 2); bottom: 16px; }
+  .toasts { padding-left: var(--rail); }
   .topbar { padding-left: 24px; padding-right: 16px; }
   .topbar .brand { display: none; }
   .search-box { display: flex !important; }
