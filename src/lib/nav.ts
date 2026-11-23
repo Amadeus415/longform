@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from "react";
 
-// Three tabs and one sub-page, kept in the URL hash so Back and reloads behave.
+// Four tabs and two Library sub-pages, kept in the URL hash so Back and reloads behave.
 
-export type Route = "feed" | "algorithm" | "library" | "library/channels";
-const ROUTES: Route[] = ["feed", "algorithm", "library", "library/channels"];
+export type Route = "feed" | "news" | "algorithm" | "library" | "library/channels" | "library/sources";
+const ROUTES: Route[] = ["feed", "news", "algorithm", "library", "library/channels", "library/sources"];
 
 function read(): Route {
   const hash = location.hash.slice(1) as Route;
@@ -14,8 +14,8 @@ let route: Route = typeof location === "undefined" ? "feed" : read();
 const listeners = new Set<() => void>();
 const scrollBy = new Map<Route, number>();
 
-/** Something the next screen should do on arrival, such as searching for a channel name. */
-export let intent: { channelQuery?: string } = {};
+/** Something the next screen should do on arrival, such as searching for a channel or source. */
+export let intent: { channelQuery?: string; sourceQuery?: string; algorithmTab?: "videos" | "news" } = {};
 
 if (typeof window !== "undefined") {
   window.addEventListener("hashchange", () => {
@@ -36,10 +36,10 @@ export function navigate(next: Route, nextIntent: typeof intent = {}): void {
     window.scrollTo({ top: 0, behavior: "smooth" }); // tapping the current tab scrolls to the top
     return;
   }
-  if (next === "library/channels") scrollBy.delete(next);
+  if (next === "library/channels" || next === "library/sources") scrollBy.delete(next);
   location.hash = next === "feed" ? "" : next;
 }
 
-export function tabOf(r: Route): "feed" | "algorithm" | "library" {
-  return r.startsWith("library") ? "library" : (r as "feed" | "algorithm");
+export function tabOf(r: Route): "feed" | "news" | "algorithm" | "library" {
+  return r.startsWith("library") ? "library" : (r as "feed" | "news" | "algorithm");
 }

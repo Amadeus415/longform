@@ -30,10 +30,15 @@ const STROKE: Record<string, string> = {
   eyeOff: "M3.5 3.5l17 17M10.4 5.6A9.5 9.5 0 0 1 12 5.5c4.6 0 8.2 4 9.2 6.5a11 11 0 0 1-2.4 3.4M6.7 7.2A11.5 11.5 0 0 0 2.8 12c1 2.5 4.6 6.5 9.2 6.5a9 9 0 0 0 4-.9M10 10.2a2.6 2.6 0 0 0 3.7 3.6",
   code: "M8.5 7.5 4 12l4.5 4.5M15.5 7.5 20 12l-4.5 4.5",
   list: "M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01",
+  news: "M5 4.5h11a1.5 1.5 0 0 1 1.5 1.5v13.5H6.5A2.5 2.5 0 0 1 4 17V6a1.5 1.5 0 0 1 1-1.5zM17.5 8.5H20a1 1 0 0 1 1 1V17a2.5 2.5 0 0 1-2.5 2.5h-1M8 8.5h6M8 12h6M8 15.5h4",
+  rss: "M5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM4.5 11.5a8 8 0 0 1 8 8M4.5 5.5a14 14 0 0 1 14 14",
+  spark: "M12 3.5l2.2 6.3 6.3 2.2-6.3 2.2L12 20.5l-2.2-6.3-6.3-2.2 6.3-2.2z",
+  checkAll: "M3.5 12.5l4 4L16 8M10.5 16.5l2 2L21 10",
 };
 
 const FILLED: Record<string, string> = {
   homeFill: "M3.5 10.2 12 3.5l8.5 6.7V19.5a1 1 0 0 1-1 1H15v-6.2H9v6.2H4.5a1 1 0 0 1-1-1z",
+  newsFill: "M5 3.5h11A2.5 2.5 0 0 1 18.5 6v2H20a2 2 0 0 1 2 2v7a3.5 3.5 0 0 1-3.5 3.5h-12A3.5 3.5 0 0 1 3 17V6a2.5 2.5 0 0 1 2-2.5zm3 4.2a.9.9 0 0 0 0 1.8h6a.9.9 0 0 0 0-1.8H8zm0 3.5a.9.9 0 0 0 0 1.8h6a.9.9 0 0 0 0-1.8H8zm0 3.5a.9.9 0 0 0 0 1.8h4a.9.9 0 0 0 0-1.8H8z",
   play: "M8 5.6v12.8a1 1 0 0 0 1.5.86l10.4-6.4a1 1 0 0 0 0-1.72L9.5 4.74A1 1 0 0 0 8 5.6z",
   pause: "M7.5 5h2.6a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H7.5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM13.9 5h2.6a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2.6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
   more: "M5.5 13.6a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2zM12 13.6a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2zM18.5 13.6a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2z",
@@ -103,6 +108,33 @@ export function Avatar({ id, title, size = 36, ring }: { id: string; title: stri
       ) : (
         <img
           src={`/api/avatar/${id}`}
+          alt=""
+          decoding="async"
+          className={loaded ? "loaded" : ""}
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      )}
+    </span>
+  );
+}
+
+export function NewsAvatar({ id, title, src, size = 36 }: { id: string; title: string; src?: string; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+    setLoaded(false);
+  }, [id, src]);
+  const initials = title.replace(/[^\p{L}\p{N} ]/gu, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  const imgSrc = src || `/api/news/avatar?id=${encodeURIComponent(id)}`;
+  return (
+    <span className="avatar" style={{ width: size, height: size }}>
+      {failed ? (
+        <span className="avatar-initials" style={{ fontSize: size * 0.38 }}>{initials || "?"}</span>
+      ) : (
+        <img
+          src={imgSrc}
           alt=""
           decoding="async"
           className={loaded ? "loaded" : ""}

@@ -1,12 +1,14 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_RULES, describeChanges, normalizeRules, type Rules } from "./filter";
-import type { ChannelFeed, Video } from "./types";
+import { DEFAULT_NEWS_RULES, describeNewsChanges, normalizeNewsRules, type NewsRules } from "./newsFilter";
+import type { ChannelFeed, NewsSource, NewsSourceFeed, Video } from "./types";
 
 // All of your data lives in this browser: no account, no server-side profile.
 // Each top-level key is saved to localStorage on its own.
 
 export type Channel = { id: string; title: string };
 export type Version = { v: number; at: number; rules: Rules; changes: string[]; note?: string };
+export type NewsVersion = { v: number; at: number; rules: NewsRules; changes: string[]; note?: string };
 export type Progress = {
   t: number; // seconds listened
   d: number; // duration
@@ -30,6 +32,11 @@ export type State = {
   feeds: Record<string, ChannelFeed>;
   /** Seconds listened or watched per local day ("2026-11-20"), for the weekly summary. */
   listened: Record<string, number>;
+  newsSources: NewsSource[];
+  newsHistory: NewsVersion[];
+  /** News item IDs marked read (id -> epoch ms). */
+  newsRead: Record<string, number>;
+  newsFeeds: Record<string, NewsSourceFeed>;
 };
 
 const PREFIX = "longform.";
@@ -42,6 +49,10 @@ const DEFAULTS: State = {
   settings: { mode: isPhone ? "listen" : "watch", frames: true, theme: "auto", rate: 1, continueOnLock: true },
   feeds: {},
   listened: {},
+  newsSources: [],
+  newsHistory: [{ v: 1, at: Date.now(), rules: DEFAULT_NEWS_RULES, changes: ["Default news rules"] }],
+  newsRead: {},
+  newsFeeds: {},
 };
 
 function load<K extends keyof State>(key: K): State[K] {
@@ -50,7 +61,7 @@ function load<K extends keyof State>(key: K): State[K] {
     if (raw) {
       const value = JSON.parse(raw);
       if (key === "settings") return { ...DEFAULTS.settings, ...value };
-      if (key === "history" && (!Array.isArray(value) || !value.length)) return DEFAULTS[key];
+      if ((key === "history" || key === "newsHistory") && (!Array.isArray(value) || !value.length)) return DEFAULTS[key];
       return value;
     }
   } catch {}
@@ -64,12 +75,17 @@ let state: State = {
   settings: load("settings"),
   feeds: load("feeds"),
   listened: load("listened"),
+  newsSources: load("newsSources"),
+  newsHistory: load("newsHistory"),
+  newsRead: load("newsRead"),
+  newsFeeds: load("newsFeeds"),
 };
 
 const listeners = new Set<() => void>();
 const dirty = new Set<keyof State>();
 // Save the default rules once, so v1 keeps the date you first opened the app.
 if (typeof localStorage !== "undefined" && !localStorage.getItem(PREFIX + "history")) dirty.add("history");
+if (typeof localStorage !== "undefined" && !localStorage.getItem(PREFIX + "newsHistory")) dirty.add("newsHistory");
 let saveTimer: ReturnType<typeof setTimeout> | undefined = dirty.size ? setTimeout(() => save(), 300) : undefined;
 
 function save() {
@@ -78,8 +94,8 @@ function save() {
     try {
       localStorage.setItem(PREFIX + key, JSON.stringify(state[key]));
     } catch {
-      // Storage full: the feed cache is the only thing we can safely drop.
-      if (key === "feeds") localStorage.removeItem(PREFIX + key);
+      // Storage full: the feed caches are the only things we can safely drop.
+      if (key === "feeds" || key === "newsFeeds") localStorage.removeItem(PREFIX + key);
     }
   }
   dirty.clear();
@@ -107,7 +123,7 @@ export function useStore<T = State>(select: (s: State) => T = (s) => s as T): T 
   );
 }
 
-// ---------- rules ----------
+// ---------- video rules ----------
 
 export function currentRules(s: State = state): Rules {
   return s.history[s.history.length - 1].rules;
@@ -129,6 +145,30 @@ export function restoreVersion(v: number): void {
   if (version) commitRules(version.rules, `Restored v${v}`);
 }
 
+// ---------- news rules ----------
+
+export function currentNewsRules(s: State = state): NewsRules {
+  return s.newsHistory[s.newsHistory.length - 1].rules;
+}
+
+export function commitNewsRules(next: NewsRules, note?: string): boolean {
+  const rules = normalizeNewsRules(next);
+  const changes = describeNewsChanges(currentNewsRules(), rules);
+  if (!changes.length) return false;
+  setState((s) => ({
+    newsHistory: [
+      ...s.newsHistory,
+      { v: s.newsHistory[s.newsHistory.length - 1].v + 1, at: Date.now(), rules, changes, note: note?.trim() || undefined },
+    ],
+  }));
+  return true;
+}
+
+export function restoreNewsVersion(v: number): void {
+  const version = state.newsHistory.find((h) => h.v === v);
+  if (version) commitNewsRules(version.rules, `Restored v${v}`);
+}
+
 // ---------- channels ----------
 
 export function addChannels(channels: Channel[]): number {
@@ -145,6 +185,51 @@ export function removeChannel(id: string): void {
   setState((s) => {
     const { [id]: _, ...feeds } = s.feeds;
     return { channels: s.channels.filter((c) => c.id !== id), feeds };
+  });
+}
+
+// ---------- news sources & read state ----------
+
+export function addNewsSources(sources: NewsSource[]): number {
+  const have = new Set(state.newsSources.map((s) => s.id));
+  const fresh = sources.filter((s) => !have.has(s.id) && (have.add(s.id), true));
+  if (fresh.length) {
+    setState((s) => ({ newsSources: [...s.newsSources, ...fresh] }));
+    navigator.storage?.persist?.().catch(() => {});
+  }
+  return fresh.length;
+}
+
+export function removeNewsSource(id: string): void {
+  setState((s) => {
+    const { [id]: _, ...newsFeeds } = s.newsFeeds;
+    return { newsSources: s.newsSources.filter((src) => src.id !== id), newsFeeds };
+  });
+}
+
+const MAX_READ_HISTORY = 2000;
+
+export function markNewsRead(ids: string[]): void {
+  if (!ids.length) return;
+  const now = Date.now();
+  setState((s) => {
+    const next: Record<string, number> = { ...s.newsRead };
+    for (const id of ids) next[id] = now;
+    const entries = Object.entries(next);
+    if (entries.length > MAX_READ_HISTORY) {
+      entries.sort((a, b) => b[1] - a[1]);
+      return { newsRead: Object.fromEntries(entries.slice(0, MAX_READ_HISTORY)) };
+    }
+    return { newsRead: next };
+  });
+}
+
+export function markNewsUnread(ids: string[]): void {
+  if (!ids.length) return;
+  setState((s) => {
+    const next = { ...s.newsRead };
+    for (const id of ids) delete next[id];
+    return { newsRead: next };
   });
 }
 
@@ -182,8 +267,12 @@ export function updateSettings(patch: Partial<Settings>): void {
 // ---------- backup ----------
 
 export function exportData(): string {
-  const { channels, history, progress, settings } = state;
-  return JSON.stringify({ app: "longform", version: 1, exportedAt: new Date().toISOString(), channels, history, progress, settings }, null, 2);
+  const { channels, history, progress, settings, newsSources, newsHistory, newsRead } = state;
+  return JSON.stringify(
+    { app: "longform", version: 2, exportedAt: new Date().toISOString(), channels, history, progress, settings, newsSources, newsHistory, newsRead },
+    null,
+    2,
+  );
 }
 
 export function importData(json: string): void {
@@ -192,11 +281,21 @@ export function importData(json: string): void {
   const history: Version[] = Array.isArray(data.history) && data.history.length
     ? data.history.map((h: Version, i: number) => ({ ...h, v: Number(h.v) || i + 1, rules: normalizeRules(h.rules) }))
     : DEFAULTS.history;
+  const newsHistory: NewsVersion[] = Array.isArray(data.newsHistory) && data.newsHistory.length
+    ? data.newsHistory.map((h: NewsVersion, i: number) => ({ ...h, v: Number(h.v) || i + 1, rules: normalizeNewsRules(h.rules) }))
+    : DEFAULTS.newsHistory;
+  const newsSources: NewsSource[] = Array.isArray(data.newsSources)
+    ? data.newsSources.filter((s: NewsSource) => typeof s?.id === "string" && typeof s?.title === "string" && (s.kind === "bsky" || s.kind === "rss" || s.kind === "hn"))
+    : [];
   setState({
     channels: Array.isArray(data.channels) ? data.channels.filter((c: Channel) => /^UC[\w-]{22}$/.test(c?.id)) : [],
     history,
     progress: data.progress && typeof data.progress === "object" ? data.progress : {},
     settings: { ...DEFAULTS.settings, ...data.settings },
     feeds: {},
+    newsSources,
+    newsHistory,
+    newsRead: data.newsRead && typeof data.newsRead === "object" ? data.newsRead : {},
+    newsFeeds: {},
   });
 }

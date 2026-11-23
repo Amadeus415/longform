@@ -35,6 +35,7 @@ Inspired by Andrej Karpathy's [HackerTube](https://hackertube.org).
 - **Nothing hidden** — Every filtered video shows its reason, like `Shorter than 20 min (8:14)`. Tap it to play anyway.
 - **Listen or Watch** — Audio-only playback survives a locked screen, with lock-screen controls. Switch to video at any second.
 - **Made for long episodes** — Resume where you left off, chapters, 1–2× speed, −15 / +30 s skips, and a weekly listening summary.
+- **Daily News Brief (zero cost)** — A calm **News** tab alongside your videos using public Bluesky feeds, RSS/Atom feeds, and Hacker News (no API keys). Multi-source stories cluster automatically into **Key Events**, standalone essays surface as **Key Insights**, and every hidden post has an explainable rule.
 - **Private by design** — No account, no tracking. Export a backup file to move devices.
 
 ## The algorithm
@@ -114,7 +115,6 @@ YouTube IFrame player (Watch)                 GET /api/channels/find?q=
 
 ## Roadmap
 
-- An X feed with the same deterministic filtering
 - Sync between devices without an account
 - Shared rule sets you can publish and subscribe to
 - Per-channel rules and an Up Next queue

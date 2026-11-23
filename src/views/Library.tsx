@@ -1,14 +1,16 @@
 import { useMemo, useRef, useState } from "react";
 import { refreshFeeds } from "../lib/feed";
 import { navigate } from "../lib/nav";
+import { refreshNews } from "../lib/newsFeed";
 import { play } from "../lib/player";
 import { dayKey, exportData, importData, updateSettings, useStore } from "../lib/store";
 import { toVideo } from "../lib/useFeed";
-import { Avatar, Frame, Icon, REPO_URL, Segmented, Toggle, span, toast } from "./ui";
+import { Avatar, Frame, Icon, NewsAvatar, REPO_URL, Segmented, Toggle, span, toast } from "./ui";
 
 export function Library() {
   const settings = useStore((s) => s.settings);
   const channels = useStore((s) => s.channels);
+  const newsSources = useStore((s) => s.newsSources);
   const progress = useStore((s) => s.progress);
   const backup = useRef<HTMLInputElement>(null);
   const recent = useMemo(() => Object.values(progress).sort((a, b) => b.at - a.at).slice(0, 12), [progress]);
@@ -42,9 +44,16 @@ export function Library() {
         <div className="section-head"><h2>Following</h2></div>
         <div className="group">
           <button className="row" onClick={() => navigate("library/channels")}>
-            <span className="label">Channels<small>{channels.length ? `${channels.length} channels` : "Add the channels you trust"}</small></span>
+            <span className="label">Channels<small>{channels.length ? `${channels.length} YouTube channels` : "Add the channels you trust"}</small></span>
             <span className="stack-avatars">
               {channels.slice(0, 4).map((c) => <Avatar key={c.id} id={c.id} title={c.title} size={28} />)}
+            </span>
+            <span className="chev"><Icon name="right" size={18} /></span>
+          </button>
+          <button className="row" onClick={() => navigate("library/sources")}>
+            <span className="label">News sources<small>{newsSources.length ? `${newsSources.length} Bluesky, RSS & HN sources` : "Build your zero-cost daily brief"}</small></span>
+            <span className="stack-avatars">
+              {newsSources.slice(0, 4).map((s) => <NewsAvatar key={s.id} id={s.id} title={s.title} src={s.avatar} size={28} />)}
             </span>
             <span className="chev"><Icon name="right" size={18} /></span>
           </button>
@@ -85,7 +94,7 @@ export function Library() {
             }}
           >
             <span className="lead"><Icon name="upload" /></span>
-            <span className="label">Export a backup<small>Channels, algorithm history, and progress</small></span>
+            <span className="label">Export a backup<small>Channels, news sources, rules, and progress</small></span>
           </button>
           <button className="row with-icon" onClick={() => backup.current?.click()}>
             <span className="lead"><Icon name="download" /></span>
@@ -107,6 +116,7 @@ export function Library() {
             try {
               importData(await file.text());
               refreshFeeds(true);
+              refreshNews(true);
               toast("Backup restored");
             } catch (error) {
               toast((error as Error).message || "That file isn’t a Longform backup.");
