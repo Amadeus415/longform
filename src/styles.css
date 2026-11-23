@@ -899,6 +899,10 @@ img { display: block; }
 .lock-card .appicon { width: 56px; height: 56px; border-radius: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18); }
 .lock-card h1 { margin: 4px 0 0; font: 800 30px/1.1 var(--display); letter-spacing: -0.03em; }
 .lock-card .lede { margin: -4px 0 4px; color: var(--text-2); font-size: 15px; line-height: 1.45; }
+.lock-form { display: grid; gap: 12px; }
+.google-btn { background: var(--surface); border: 1px solid var(--line); color: var(--text); gap: 10px; }
+.lock-divider { display: flex; align-items: center; gap: 10px; color: var(--text-3); font-size: 13px; }
+.lock-divider::before, .lock-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .lock-error { margin: -4px 0 0; color: var(--danger); font-size: 14px; font-weight: 500; }
 
 /* ---------- search ---------- */

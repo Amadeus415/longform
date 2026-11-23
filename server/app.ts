@@ -3,14 +3,19 @@ import { audioResponse, warmAudio } from "./audio.ts";
 import {
   checkLoginRateLimit,
   clearSessionCookie,
+  finishGoogleAuth,
+  getSession,
   isAuthEnabled,
   isAuthenticated,
+  isGoogleAuthEnabled,
+  isPasswordAuthEnabled,
   loginRateKey,
   recordFailedLogin,
   requireAuth,
   resetLoginRateLimit,
   securityHeaders,
   setSessionCookie,
+  startGoogleAuth,
   verifyPassword,
 } from "./auth.ts";
 import { findNewsSources, getNewsAvatarImage, getNewsSourceFeed, parseSourceId } from "./news.ts";
@@ -26,12 +31,24 @@ app.get("/api/health", (c) => c.json({ ok: true }));
 
 app.get("/api/auth/status", (c) => {
   c.header("Cache-Control", "no-store");
-  return c.json({ protected: isAuthEnabled(), authenticated: isAuthenticated(c) });
+  const session = getSession(c);
+  return c.json({
+    protected: isAuthEnabled(),
+    authenticated: isAuthenticated(c),
+    email: session?.email,
+    methods: {
+      google: isGoogleAuthEnabled(),
+      password: isPasswordAuthEnabled(),
+    },
+  });
 });
+
+app.get("/api/auth/google", (c) => startGoogleAuth(c));
+app.get("/api/auth/google/callback", (c) => finishGoogleAuth(c));
 
 app.post("/api/auth/login", async (c) => {
   c.header("Cache-Control", "no-store");
-  if (!isAuthEnabled()) return c.json({ ok: true });
+  if (!isPasswordAuthEnabled()) return c.json({ error: "Passcode sign-in is not enabled." }, 403);
   const key = loginRateKey(c);
   const limit = checkLoginRateLimit(key);
   if (!limit.ok) {

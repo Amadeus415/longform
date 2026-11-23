@@ -3,6 +3,8 @@ import { app } from "../server/app";
 import {
   checkLoginRateLimit,
   createSessionToken,
+  isAllowedEmail,
+  readSessionToken,
   recordFailedLogin,
   resetLoginRateLimit,
   verifyPassword,
@@ -10,14 +12,14 @@ import {
 } from "../server/auth";
 import { isPublicIp, isSafeHttpUrl } from "../server/news";
 
-const origPassword = process.env.APP_PASSWORD;
-const origSecret = process.env.SESSION_SECRET;
+const ENV_KEYS = ["APP_PASSWORD", "SESSION_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ALLOWED_EMAILS", "PUBLIC_URL"] as const;
+const savedEnv = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
 afterEach(() => {
-  if (origPassword === undefined) delete process.env.APP_PASSWORD;
-  else process.env.APP_PASSWORD = origPassword;
-  if (origSecret === undefined) delete process.env.SESSION_SECRET;
-  else process.env.SESSION_SECRET = origSecret;
+  for (const k of ENV_KEYS) {
+    if (savedEnv[k] === undefined) delete process.env[k];
+    else process.env[k] = savedEnv[k];
+  }
   resetLoginRateLimit("test-ip");
 });
 
@@ -50,7 +52,11 @@ describe("auth & session tokens", () => {
     process.env.SESSION_SECRET = "signing-key-123";
 
     const statusBefore = await app.request("/api/auth/status");
-    expect(await statusBefore.json()).toEqual({ protected: true, authenticated: false });
+    expect(await statusBefore.json()).toEqual({
+      protected: true,
+      authenticated: false,
+      methods: { google: false, password: true },
+    });
 
     const blocked = await app.request("/api/news/source?id=hn:front_page");
     expect(blocked.status).toBe(401);
@@ -75,9 +81,47 @@ describe("auth & session tokens", () => {
 
     const cookiePair = cookie.split(";")[0];
     const statusAfter = await app.request("/api/auth/status", { headers: { Cookie: cookiePair } });
-    expect(await statusAfter.json()).toEqual({ protected: true, authenticated: true });
+    expect(await statusAfter.json()).toEqual({
+      protected: true,
+      authenticated: true,
+      methods: { google: false, password: true },
+    });
     expect(statusAfter.headers.get("x-content-type-options")).toBe("nosniff");
     expect(statusAfter.headers.get("x-frame-options")).toBe("DENY");
+  });
+
+  it("supports Google OAuth PKCE + strict ALLOWED_EMAILS allowlist and instant revocation", async () => {
+    process.env.GOOGLE_CLIENT_ID = "client-123.apps.googleusercontent.com";
+    process.env.GOOGLE_CLIENT_SECRET = "secret-xyz";
+    process.env.ALLOWED_EMAILS = "Alice@Gmail.com, bob@example.com";
+    process.env.SESSION_SECRET = "signing-key-google";
+
+    expect(isAllowedEmail("alice@gmail.com")).toBe(true);
+    expect(isAllowedEmail("stranger@gmail.com")).toBe(false);
+
+    const status = await app.request("/api/auth/status");
+    expect(await status.json()).toEqual({
+      protected: true,
+      authenticated: false,
+      methods: { google: true, password: false },
+    });
+
+    const start = await app.request("https://longform-beta.vercel.app/api/auth/google");
+    expect(start.status).toBe(302);
+    const loc = new URL(start.headers.get("location")!);
+    expect(loc.origin).toBe("https://accounts.google.com");
+    expect(loc.searchParams.get("client_id")).toBe("client-123.apps.googleusercontent.com");
+    expect(loc.searchParams.get("redirect_uri")).toBe("https://longform-beta.vercel.app/api/auth/google/callback");
+    expect(loc.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(loc.searchParams.get("code_challenge")).toBeTruthy();
+    expect(start.headers.get("set-cookie")).toContain("longform_oauth=");
+
+    const aliceToken = createSessionToken(1_000_000, "alice@gmail.com");
+    expect(readSessionToken(aliceToken, 1_000_010)).toMatchObject({ email: "alice@gmail.com" });
+
+    // Removing alice from ALLOWED_EMAILS immediately invalidates her token.
+    process.env.ALLOWED_EMAILS = "bob@example.com";
+    expect(readSessionToken(aliceToken, 1_000_010)).toBeNull();
   });
 });
 

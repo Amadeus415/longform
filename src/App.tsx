@@ -22,14 +22,25 @@ const TABS: { id: "feed" | "news" | "algorithm" | "library"; label: string; icon
   { id: "library", label: "Library", icon: "you", active: "you" },
 ];
 
-type AuthState = { checking: boolean; protected: boolean; authenticated: boolean };
+type AuthState = {
+  checking: boolean;
+  protected: boolean;
+  authenticated: boolean;
+  email?: string;
+  methods: { google: boolean; password: boolean };
+};
 
 export function App() {
   const route = useRoute();
   const theme = useStore((s) => s.settings.theme);
   const channelCount = useStore((s) => s.channels.length);
   const newsSourceCount = useStore((s) => s.newsSources.length);
-  const [auth, setAuth] = useState<AuthState>({ checking: true, protected: false, authenticated: true });
+  const [auth, setAuth] = useState<AuthState>({
+    checking: true,
+    protected: false,
+    authenticated: true,
+    methods: { google: false, password: false },
+  });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -40,8 +51,16 @@ export function App() {
   useEffect(() => {
     fetch("/api/auth/status", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : { protected: false, authenticated: true }))
-      .then((data) => setAuth({ checking: false, protected: Boolean(data.protected), authenticated: Boolean(data.authenticated) }))
-      .catch(() => setAuth({ checking: false, protected: false, authenticated: true }));
+      .then((data) =>
+        setAuth({
+          checking: false,
+          protected: Boolean(data.protected),
+          authenticated: Boolean(data.authenticated),
+          email: typeof data.email === "string" ? data.email : undefined,
+          methods: { google: Boolean(data.methods?.google), password: Boolean(data.methods?.password) },
+        }),
+      )
+      .catch(() => setAuth({ checking: false, protected: false, authenticated: true, methods: { google: false, password: false } }));
   }, []);
 
   useEffect(() => {
@@ -72,7 +91,7 @@ export function App() {
   if (auth.protected && !auth.authenticated) {
     return (
       <>
-        <Lock onUnlocked={() => setAuth({ checking: false, protected: true, authenticated: true })} />
+        <Lock methods={auth.methods} onUnlocked={() => setAuth((a) => ({ ...a, authenticated: true }))} />
         <Toasts />
       </>
     );
@@ -89,7 +108,7 @@ export function App() {
 
   const signOut = async () => {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    setAuth({ checking: false, protected: true, authenticated: false });
+    setAuth((a) => ({ ...a, authenticated: false, email: undefined }));
   };
 
   const tab = tabOf(route);
@@ -112,7 +131,7 @@ export function App() {
         {route === "feed" && <Feed />}
         {route === "news" && <News />}
         {route === "algorithm" && <Algorithm />}
-        {route === "library" && <Library authProtected={auth.protected} onSignOut={signOut} />}
+        {route === "library" && <Library authProtected={auth.protected} authEmail={auth.email} onSignOut={signOut} />}
         {route === "library/channels" && <Channels />}
         {route === "library/sources" && <NewsSources />}
       </main>
