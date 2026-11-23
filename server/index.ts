@@ -4,8 +4,6 @@ import { STARTER_PACKS } from "../src/lib/starter.ts";
 import { app } from "./app.ts";
 import { warmAvatars } from "./youtube.ts";
 
-app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
-
 if (process.env.NODE_ENV === "production") {
   app.use("/assets/*", async (c, next) => {
     await next();

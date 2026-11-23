@@ -1,20 +1,70 @@
 import { Hono } from "hono";
 import { audioResponse, warmAudio } from "./audio.ts";
+import {
+  checkLoginRateLimit,
+  clearSessionCookie,
+  isAuthEnabled,
+  isAuthenticated,
+  loginRateKey,
+  recordFailedLogin,
+  requireAuth,
+  resetLoginRateLimit,
+  securityHeaders,
+  setSessionCookie,
+  verifyPassword,
+} from "./auth.ts";
 import { findNewsSources, getNewsAvatarImage, getNewsSourceFeed, parseSourceId } from "./news.ts";
 import { findChannels, getAvatarImage, getChannelFeed, isChannelId } from "./youtube.ts";
 
 // The API routes, shared by the long-running server (index.ts) and the Vercel function (api/index.ts).
 export const app = new Hono();
 
+app.use("*", securityHeaders);
+app.use("/api/*", requireAuth);
+
 app.get("/api/health", (c) => c.json({ ok: true }));
 
-// One channel's latest long-form uploads. Responses are the same for everyone, so a CDN can cache them.
+app.get("/api/auth/status", (c) => {
+  c.header("Cache-Control", "no-store");
+  return c.json({ protected: isAuthEnabled(), authenticated: isAuthenticated(c) });
+});
+
+app.post("/api/auth/login", async (c) => {
+  c.header("Cache-Control", "no-store");
+  if (!isAuthEnabled()) return c.json({ ok: true });
+  const key = loginRateKey(c);
+  const limit = checkLoginRateLimit(key);
+  if (!limit.ok) {
+    c.header("Retry-After", String(limit.retryAfterSec));
+    return c.json({ error: "Too many attempts. Try again in a few minutes." }, 429);
+  }
+  const body = await c.req.json().catch(() => null);
+  const password = typeof body?.password === "string" ? body.password : "";
+  if (!verifyPassword(password)) {
+    recordFailedLogin(key);
+    return c.json({ error: "Incorrect passcode." }, 401);
+  }
+  resetLoginRateLimit(key);
+  setSessionCookie(c);
+  return c.json({ ok: true });
+});
+
+app.post("/api/auth/logout", (c) => {
+  c.header("Cache-Control", "no-store");
+  clearSessionCookie(c);
+  return c.json({ ok: true });
+});
+
+// One channel's latest long-form uploads. Responses are the same for everyone, so a CDN can cache them when public.
 app.get("/api/channel/:id", async (c) => {
   const id = c.req.param("id");
   if (!isChannelId(id)) return c.json({ error: "Not a channel ID" }, 400);
   try {
     const feed = await getChannelFeed(id);
-    c.header("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=86400");
+    c.header(
+      "Cache-Control",
+      isAuthEnabled() ? "private, max-age=300" : "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+    );
     return c.json(feed);
   } catch (error) {
     console.error(`[channel] ${id}: ${(error as Error).message}`);
@@ -28,7 +78,11 @@ app.get("/api/avatar/:id", async (c) => {
   if (!isChannelId(id)) return c.body(null, 400);
   const image = await getAvatarImage(id).catch(() => null);
   if (!image) return c.body(null, 404);
-  return c.body(image.bytes, 200, { "Content-Type": image.type, "Cache-Control": "public, max-age=86400" });
+  return c.body(image.bytes, 200, {
+    "Content-Type": image.type,
+    "Content-Security-Policy": "default-src 'none'; sandbox",
+    "Cache-Control": isAuthEnabled() ? "private, max-age=86400" : "public, max-age=86400",
+  });
 });
 
 app.get("/api/channels/find", async (c) => {
@@ -52,7 +106,10 @@ app.get("/api/news/source", async (c) => {
   if (!parseSourceId(id)) return c.json({ error: "Invalid news source ID" }, 400);
   try {
     const feed = await getNewsSourceFeed(id);
-    c.header("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=86400");
+    c.header(
+      "Cache-Control",
+      isAuthEnabled() ? "private, max-age=300" : "public, max-age=300, s-maxage=900, stale-while-revalidate=86400",
+    );
     return c.json(feed);
   } catch (error) {
     console.error(`[news] ${id}: ${(error as Error).message}`);
@@ -74,5 +131,11 @@ app.get("/api/news/avatar", async (c) => {
   if (!parseSourceId(id)) return c.body(null, 400);
   const image = await getNewsAvatarImage(id).catch(() => null);
   if (!image) return c.body(null, 404);
-  return c.body(image.bytes, 200, { "Content-Type": image.type, "Cache-Control": "public, max-age=86400" });
+  return c.body(image.bytes, 200, {
+    "Content-Type": image.type,
+    "Content-Security-Policy": "default-src 'none'; sandbox",
+    "Cache-Control": isAuthEnabled() ? "private, max-age=86400" : "public, max-age=86400",
+  });
 });
+
+app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));

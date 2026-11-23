@@ -7,7 +7,7 @@ import { dayKey, exportData, importData, updateSettings, useStore } from "../lib
 import { toVideo } from "../lib/useFeed";
 import { Avatar, Frame, Icon, NewsAvatar, REPO_URL, Segmented, Toggle, span, toast } from "./ui";
 
-export function Library() {
+export function Library({ authProtected = false, onSignOut }: { authProtected?: boolean; onSignOut?: () => void }) {
   const settings = useStore((s) => s.settings);
   const channels = useStore((s) => s.channels);
   const newsSources = useStore((s) => s.newsSources);
@@ -123,6 +123,18 @@ export function Library() {
             }
           }}
         />
+
+        {authProtected && onSignOut && (
+          <>
+            <div className="section-head"><h2>Security</h2></div>
+            <div className="group">
+              <button className="row with-icon" onClick={onSignOut}>
+                <span className="lead"><Icon name="you" /></span>
+                <span className="label">Lock this device<small>Require your passcode again on this browser</small></span>
+              </button>
+            </div>
+          </>
+        )}
 
         <div className="section-head"><h2>About</h2></div>
         <div className="group">

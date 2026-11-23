@@ -1,3 +1,5 @@
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 import { XMLParser } from "fast-xml-parser";
 import type { NewsItem, NewsSourceFeed, NewsSourceHit, NewsSourceKind } from "../src/lib/types.ts";
 import { cached, remember } from "./cache.ts";
@@ -5,6 +7,9 @@ import { cached, remember } from "./cache.ts";
 const FEED_TTL = 15 * 60_000;
 const AVATAR_TTL = 24 * 60 * 60_000;
 const FETCH_TIMEOUT = 9_000;
+const MAX_FEED_BYTES = 2 * 1024 * 1024;
+const MAX_AVATAR_BYTES = 1 * 1024 * 1024;
+const MAX_REDIRECTS = 3;
 const UA = "Longform/0.1 (+https://github.com/Amadeus415/longform)";
 
 const xml = new XMLParser({
@@ -38,6 +43,28 @@ export function parseSourceId(id: string): { kind: NewsSourceKind; ref: string }
   return null;
 }
 
+export function isPublicIp(ip: string): boolean {
+  const clean = ip.trim().toLowerCase().replace(/^\[|\]$/g, "");
+  const version = isIP(clean);
+  if (version === 4) {
+    const [a, b] = clean.split(".").map(Number);
+    if (a === 0 || a === 10 || a === 127) return false;
+    if (a === 100 && b >= 64 && b <= 127) return false; // CGNAT
+    if (a === 169 && b === 254) return false; // link-local / cloud metadata
+    if (a === 172 && b >= 16 && b <= 31) return false;
+    if (a === 192 && b === 168) return false;
+    if (a >= 224) return false; // multicast / reserved
+    return true;
+  }
+  if (version === 6) {
+    if (clean === "::" || clean === "::1") return false;
+    if (clean.startsWith("::ffff:")) return isPublicIp(clean.slice(7));
+    if (/^(fc|fd|fe8|fe9|fea|feb|ff)/i.test(clean)) return false;
+    return true;
+  }
+  return false;
+}
+
 export function isSafeHttpUrl(raw: string): boolean {
   let u: URL;
   try {
@@ -46,13 +73,76 @@ export function isSafeHttpUrl(raw: string): boolean {
     return false;
   }
   if (u.protocol !== "http:" && u.protocol !== "https:") return false;
-  const host = u.hostname.toLowerCase();
+  if (u.username || u.password) return false;
+  const host = u.hostname.toLowerCase().replace(/^\[|\]$/g, "");
   if (!host || host === "localhost" || host.endsWith(".local") || host.endsWith(".internal")) return false;
-  if (host === "0.0.0.0" || host === "::1" || host === "[::1]") return false;
-  if (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host)) return false;
-  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(host)) return false;
-  if (/^(fc|fd|fe80)/i.test(host.replace(/^\[|\]$/g, ""))) return false;
+  if (isIP(host)) return isPublicIp(host);
   return true;
+}
+
+async function assertSafeUrl(raw: string): Promise<URL> {
+  if (!isSafeHttpUrl(raw)) throw new Error("Blocked unsafe URL");
+  const u = new URL(raw);
+  const host = u.hostname.replace(/^\[|\]$/g, "");
+  if (!isIP(host)) {
+    const records = await lookup(host, { all: true });
+    if (!records.length || records.some((r) => !isPublicIp(r.address))) {
+      throw new Error("Blocked private network target");
+    }
+  }
+  return u;
+}
+
+async function safeFetch(url: string, headers: Record<string, string>, maxBytes: number): Promise<{ bytes: Uint8Array; contentType: string; status: number; ok: boolean }> {
+  let current = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    await assertSafeUrl(current);
+    const res = await fetch(current, {
+      headers: { "User-Agent": UA, ...headers },
+      redirect: "manual",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
+    });
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get("location");
+      await res.body?.cancel();
+      if (!location || hop === MAX_REDIRECTS) throw new Error("Too many redirects");
+      current = new URL(location, current).toString();
+      continue;
+    }
+    const contentLength = Number(res.headers.get("content-length") ?? 0);
+    if (contentLength > maxBytes) {
+      await res.body?.cancel();
+      throw new Error("Response too large");
+    }
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+    const reader = res.body?.getReader();
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.byteLength;
+        if (received > maxBytes) {
+          await reader.cancel();
+          throw new Error("Response too large");
+        }
+        chunks.push(value);
+      }
+    }
+    const bytes = new Uint8Array(received);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return { bytes, contentType: res.headers.get("content-type") ?? "", status: res.status, ok: res.ok };
+  }
+  throw new Error("Too many redirects");
+}
+
+async function safeFetchText(url: string, headers: Record<string, string> = {}, maxBytes = MAX_FEED_BYTES): Promise<{ text: string; status: number; ok: boolean }> {
+  const res = await safeFetch(url, headers, maxBytes);
+  return { text: new TextDecoder().decode(res.bytes), status: res.status, ok: res.ok };
 }
 
 export function getNewsSourceFeed(sourceId: string): Promise<NewsSourceFeed> {
@@ -202,13 +292,11 @@ async function fetchHackerNewsFeed(sourceId: string, ref: string): Promise<NewsS
 // ---------- RSS / Atom (any public feed) ----------
 
 async function fetchRssFeed(sourceId: string, feedUrl: string): Promise<NewsSourceFeed> {
-  const res = await fetch(feedUrl, {
-    headers: { "User-Agent": UA, Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5" },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+  const res = await safeFetchText(feedUrl, {
+    Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5",
   });
   if (!res.ok) throw new Error(`Feed returned ${res.status}`);
-  const raw = await res.text();
-  const parsed = parseXmlFeed(raw, sourceId, feedUrl);
+  const parsed = parseXmlFeed(res.text, sourceId, feedUrl);
   if (parsed.avatar) remember(`news-avatar:${sourceId}`, AVATAR_TTL, parsed.avatar);
   return parsed;
 }
@@ -382,9 +470,9 @@ async function discoverRssFromUrl(url: string): Promise<NewsSourceHit | null> {
   if (direct) return direct;
 
   // Fetch the page HTML and look for <link rel="alternate" type="application/rss+xml|atom+xml">.
-  const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(FETCH_TIMEOUT) });
+  const res = await safeFetchText(url, {}, 512 * 1024);
   if (!res.ok) return null;
-  const html = (await res.text()).slice(0, 100_000);
+  const html = res.text.slice(0, 100_000);
   const candidates: string[] = [];
   const linkTags = html.match(/<link\b[^>]*>/gi) ?? [];
   for (const tag of linkTags) {
@@ -410,14 +498,12 @@ async function discoverRssFromUrl(url: string): Promise<NewsSourceHit | null> {
 
 async function probeRssHit(feedUrl: string): Promise<NewsSourceHit | null> {
   if (!isSafeHttpUrl(feedUrl)) return null;
-  const res = await fetch(feedUrl, {
-    headers: { "User-Agent": UA, Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9" },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
+  const res = await safeFetchText(feedUrl, {
+    Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9",
   }).catch(() => null);
   if (!res?.ok) return null;
-  const text = await res.text();
-  if (!/<(rss|feed|rdf:RDF)\b/i.test(text.slice(0, 1200))) return null;
-  const parsed = parseXmlFeed(text, `rss:${feedUrl}`, feedUrl);
+  if (!/<(rss|feed|rdf:RDF)\b/i.test(res.text.slice(0, 1200))) return null;
+  const parsed = parseXmlFeed(res.text, `rss:${feedUrl}`, feedUrl);
   return {
     id: `rss:${feedUrl}`,
     kind: "rss",
@@ -445,9 +531,12 @@ export function getNewsAvatarImage(sourceId: string): Promise<{ bytes: ArrayBuff
       if (domain) url = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
     }
     if (!url || !isSafeHttpUrl(url)) return null;
-    const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(FETCH_TIMEOUT) });
-    if (!res.ok) return null;
-    return { bytes: await res.arrayBuffer(), type: res.headers.get("content-type") ?? "image/png" };
+    const res = await safeFetch(url, { Accept: "image/*" }, MAX_AVATAR_BYTES);
+    const mediaType = res.contentType.split(";")[0].trim().toLowerCase();
+    if (!res.ok || !mediaType.startsWith("image/")) return null;
+    const buf = new ArrayBuffer(res.bytes.byteLength);
+    new Uint8Array(buf).set(res.bytes);
+    return { bytes: buf, type: mediaType };
   });
 }
 

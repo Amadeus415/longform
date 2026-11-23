@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { refreshFeeds } from "./lib/feed";
 import { navigate, tabOf, useRoute } from "./lib/nav";
 import { refreshNews } from "./lib/newsFeed";
@@ -8,6 +8,7 @@ import { Algorithm } from "./views/Algorithm";
 import { Channels } from "./views/Channels";
 import { Feed } from "./views/Feed";
 import { Library } from "./views/Library";
+import { Lock } from "./views/Lock";
 import { News } from "./views/News";
 import { NewsSources } from "./views/NewsSources";
 import { Onboarding } from "./views/Onboarding";
@@ -21,11 +22,14 @@ const TABS: { id: "feed" | "news" | "algorithm" | "library"; label: string; icon
   { id: "library", label: "Library", icon: "you", active: "you" },
 ];
 
+type AuthState = { checking: boolean; protected: boolean; authenticated: boolean };
+
 export function App() {
   const route = useRoute();
   const theme = useStore((s) => s.settings.theme);
   const channelCount = useStore((s) => s.channels.length);
   const newsSourceCount = useStore((s) => s.newsSources.length);
+  const [auth, setAuth] = useState<AuthState>({ checking: true, protected: false, authenticated: true });
 
   useEffect(() => {
     const root = document.documentElement;
@@ -34,6 +38,14 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
+    fetch("/api/auth/status", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { protected: false, authenticated: true }))
+      .then((data) => setAuth({ checking: false, protected: Boolean(data.protected), authenticated: Boolean(data.authenticated) }))
+      .catch(() => setAuth({ checking: false, protected: false, authenticated: true }));
+  }, []);
+
+  useEffect(() => {
+    if (auth.checking || !auth.authenticated) return;
     refreshFeeds();
     refreshNews();
     const onVisible = () => {
@@ -44,7 +56,7 @@ export function App() {
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [channelCount, newsSourceCount]);
+  }, [channelCount, newsSourceCount, auth.checking, auth.authenticated]);
 
   // Reopen with the last unfinished episode in the mini-player, paused.
   useEffect(() => {
@@ -55,6 +67,17 @@ export function App() {
     restore(full ?? { ...last.video, seconds: last.video.seconds ?? last.d }, last.t, last.d);
   }, []);
 
+  if (auth.checking) return null;
+
+  if (auth.protected && !auth.authenticated) {
+    return (
+      <>
+        <Lock onUnlocked={() => setAuth({ checking: false, protected: true, authenticated: true })} />
+        <Toasts />
+      </>
+    );
+  }
+
   if (!channelCount && !newsSourceCount && route === "feed") {
     return (
       <>
@@ -63,6 +86,11 @@ export function App() {
       </>
     );
   }
+
+  const signOut = async () => {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    setAuth({ checking: false, protected: true, authenticated: false });
+  };
 
   const tab = tabOf(route);
   return (
@@ -84,7 +112,7 @@ export function App() {
         {route === "feed" && <Feed />}
         {route === "news" && <News />}
         {route === "algorithm" && <Algorithm />}
-        {route === "library" && <Library />}
+        {route === "library" && <Library authProtected={auth.protected} onSignOut={signOut} />}
         {route === "library/channels" && <Channels />}
         {route === "library/sources" && <NewsSources />}
       </main>
