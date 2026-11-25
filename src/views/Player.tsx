@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { clock } from "../lib/filter";
+import { openExternalUrl } from "../lib/native";
 import {
   RATES, attachEmbed, close as stop, embedStateChanged, embedTick, expand, getPlayer, minimize, play, seek, setMode, setRate, skip, toggle,
   usePlayer,
@@ -115,7 +116,7 @@ export function PlayerSheet() {
       subtitle: video.channel,
       actions: [
         { icon: "done", label: "Mark as finished", run: done },
-        { icon: "external", label: "Open in YouTube", run: () => window.open(`https://www.youtube.com/watch?v=${video.id}&t=${Math.floor(p.time)}s`, "_blank") },
+        { icon: "external", label: "Open in YouTube", run: () => openExternalUrl(`https://www.youtube.com/watch?v=${video.id}&t=${Math.floor(p.time)}s`) },
       ],
     });
 

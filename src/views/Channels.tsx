@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { findChannels, parseSubscriptions, refreshFeeds } from "../lib/feed";
 import { intent, navigate } from "../lib/nav";
+import { openExternalUrl } from "../lib/native";
 import { STARTER_PACKS } from "../lib/starter";
 import { addChannels, useStore } from "../lib/store";
 import type { ChannelHit } from "../lib/types";
@@ -102,7 +103,7 @@ export function Channels() {
                         showActions({
                           title: c.title,
                           actions: [
-                            { icon: "external", label: "Open in YouTube", run: () => window.open(`https://www.youtube.com/channel/${c.id}`, "_blank") },
+                            { icon: "external", label: "Open in YouTube", run: () => openExternalUrl(`https://www.youtube.com/channel/${c.id}`) },
                             { icon: "unfollow", label: "Unfollow", danger: true, run: () => unfollow(c.id, c.title) },
                           ],
                         })

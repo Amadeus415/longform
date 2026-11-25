@@ -1,4 +1,6 @@
 import { useSyncExternalStore } from "react";
+import { apiFetch, apiMediaUrl } from "./api";
+import { haptic } from "./native";
 import { addListened, getState, resumePoint, saveProgress, updateSettings } from "./store";
 import type { Video } from "./types";
 
@@ -131,7 +133,7 @@ function applyPendingSeek(): void {
 }
 
 function audioSrc(id: string): string {
-  return `/api/audio/${id}`;
+  return apiMediaUrl(`/api/audio/${id}`);
 }
 
 function startAudio(video: Video, at: number): void {
@@ -216,6 +218,7 @@ export function markFinished(): void {
 }
 
 export function toggle(): void {
+  haptic("light");
   if (ps.playing) pause();
   else resume();
 }
@@ -291,7 +294,7 @@ export function restore(video: Video, at: number, duration: number): void {
 
 /** Ask the server to look up a video's audio stream now, so pressing play later is instant. */
 export function warm(id: string): void {
-  fetch(`${audioSrc(id)}/warm`, { method: "POST" }).catch(() => {});
+  apiFetch(`/api/audio/${id}/warm`, { method: "POST" }).catch(() => {});
 }
 
 // ---------- progress ----------

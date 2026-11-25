@@ -1,4 +1,5 @@
 import { refreshFeeds } from "../lib/feed";
+import { openExternalUrl } from "../lib/native";
 import { play } from "../lib/player";
 import { addChannels, getState, removeChannel, saveProgress, setState } from "../lib/store";
 import type { Video } from "../lib/types";
@@ -17,7 +18,7 @@ export function openVideoActions(video: Video): void {
       progress?.done
         ? { icon: "restore", label: "Mark as unplayed", run: () => forget(video) }
         : { icon: "done", label: "Mark as finished", run: () => finish(video) },
-      { icon: "external", label: "Open in YouTube", run: () => window.open(`https://www.youtube.com/watch?v=${video.id}`, "_blank") },
+      { icon: "external", label: "Open in YouTube", run: () => openExternalUrl(`https://www.youtube.com/watch?v=${video.id}`) },
       { icon: "unfollow", label: `Unfollow ${video.channel}`, danger: true, run: () => unfollow(video.channelId, video.channel) },
     ],
   });

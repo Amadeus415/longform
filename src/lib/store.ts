@@ -3,8 +3,8 @@ import { DEFAULT_RULES, describeChanges, normalizeRules, type Rules } from "./fi
 import { DEFAULT_NEWS_RULES, describeNewsChanges, normalizeNewsRules, type NewsRules } from "./newsFilter";
 import type { ChannelFeed, NewsSource, NewsSourceFeed, Video } from "./types";
 
-// All of your data lives in this browser: no account, no server-side profile.
-// Each top-level key is saved to localStorage on its own.
+// All of your data lives locally first for instant startup & offline reading,
+// and syncs automatically to your account when signed in on a cloud server.
 
 export type Channel = { id: string; title: string };
 export type Version = { v: number; at: number; rules: Rules; changes: string[]; note?: string };
@@ -24,25 +24,39 @@ export type Settings = {
   continueOnLock: boolean;
 };
 
-export type State = {
+export type SyncedState = {
   channels: Channel[];
   history: Version[];
   progress: Record<string, Progress>;
   settings: Settings;
-  feeds: Record<string, ChannelFeed>;
-  /** Seconds listened or watched per local day ("2026-11-20"), for the weekly summary. */
   listened: Record<string, number>;
   newsSources: NewsSource[];
   newsHistory: NewsVersion[];
-  /** News item IDs marked read (id -> epoch ms). */
   newsRead: Record<string, number>;
+};
+
+export type State = SyncedState & {
+  feeds: Record<string, ChannelFeed>;
   newsFeeds: Record<string, NewsSourceFeed>;
 };
+
+export const SYNCED_KEYS: (keyof SyncedState)[] = [
+  "channels",
+  "history",
+  "progress",
+  "settings",
+  "listened",
+  "newsSources",
+  "newsHistory",
+  "newsRead",
+];
+
+const SYNCED_KEY_SET = new Set<keyof State>(SYNCED_KEYS);
 
 const PREFIX = "longform.";
 const isPhone = typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
 
-const DEFAULTS: State = {
+export const DEFAULTS: State = {
   channels: [],
   history: [{ v: 1, at: Date.now(), rules: DEFAULT_RULES, changes: ["Default rules"] }],
   progress: {},
@@ -82,6 +96,7 @@ let state: State = {
 };
 
 const listeners = new Set<() => void>();
+const localMutationListeners = new Set<() => void>();
 const dirty = new Set<keyof State>();
 // Save the default rules once, so v1 keeps the date you first opened the app.
 if (typeof localStorage !== "undefined" && !localStorage.getItem(PREFIX + "history")) dirty.add("history");
@@ -105,12 +120,56 @@ export function getState(): State {
   return state;
 }
 
-export function setState(patch: Partial<State> | ((s: State) => Partial<State>)): void {
+export function getSyncedSnapshot(s: State = state): SyncedState {
+  return {
+    channels: s.channels,
+    history: s.history,
+    progress: s.progress,
+    settings: s.settings,
+    listened: s.listened,
+    newsSources: s.newsSources,
+    newsHistory: s.newsHistory,
+    newsRead: s.newsRead,
+  };
+}
+
+export function setState(patch: Partial<State> | ((s: State) => Partial<State>), options?: { fromSync?: boolean }): void {
   const next = typeof patch === "function" ? patch(state) : patch;
   state = { ...state, ...next };
-  for (const key of Object.keys(next) as (keyof State)[]) dirty.add(key);
+  const keys = Object.keys(next) as (keyof State)[];
+  let touchedSynced = false;
+  for (const key of keys) {
+    dirty.add(key);
+    if (SYNCED_KEY_SET.has(key)) touchedSynced = true;
+  }
   saveTimer ??= setTimeout(save, 300);
   listeners.forEach((listener) => listener());
+  if (touchedSynced && !options?.fromSync) {
+    localMutationListeners.forEach((listener) => listener());
+  }
+}
+
+/** Subscribe specifically to local mutations of user-synced keys (for cloud sync). */
+export function onLocalSyncedChange(listener: () => void): () => void {
+  localMutationListeners.add(listener);
+  return () => localMutationListeners.delete(listener);
+}
+
+/** Apply merged state pulled from the server without triggering an immediate echo push. */
+export function applySyncedState(next: SyncedState): void {
+  setState(
+    {
+      channels: next.channels,
+      history: next.history,
+      progress: next.progress,
+      settings: { ...DEFAULTS.settings, ...next.settings },
+      listened: next.listened,
+      newsSources: next.newsSources,
+      newsHistory: next.newsHistory,
+      newsRead: next.newsRead,
+    },
+    { fromSync: true },
+  );
 }
 
 if (typeof window !== "undefined") window.addEventListener("pagehide", () => dirty.size && save());
@@ -267,9 +326,9 @@ export function updateSettings(patch: Partial<Settings>): void {
 // ---------- backup ----------
 
 export function exportData(): string {
-  const { channels, history, progress, settings, newsSources, newsHistory, newsRead } = state;
+  const { channels, history, progress, settings, listened, newsSources, newsHistory, newsRead } = state;
   return JSON.stringify(
-    { app: "longform", version: 2, exportedAt: new Date().toISOString(), channels, history, progress, settings, newsSources, newsHistory, newsRead },
+    { app: "longform", version: 2, exportedAt: new Date().toISOString(), channels, history, progress, settings, listened, newsSources, newsHistory, newsRead },
     null,
     2,
   );
@@ -292,6 +351,7 @@ export function importData(json: string): void {
     history,
     progress: data.progress && typeof data.progress === "object" ? data.progress : {},
     settings: { ...DEFAULTS.settings, ...data.settings },
+    listened: data.listened && typeof data.listened === "object" ? data.listened : {},
     feeds: {},
     newsSources,
     newsHistory,

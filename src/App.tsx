@@ -1,9 +1,27 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  apiFetch,
+  clearAuthTokens,
+  getServerUrl,
+  initApi,
+  needsServerConfig,
+  onUnauthorized,
+  setAuthTokens,
+} from "./lib/api";
 import { refreshFeeds } from "./lib/feed";
 import { navigate, tabOf, useRoute } from "./lib/nav";
+import {
+  closeAuthBrowser,
+  hideSplashScreen,
+  isNative,
+  onAppStateChange,
+  onDeepLink,
+  syncStatusBar,
+} from "./lib/native";
 import { refreshNews } from "./lib/newsFeed";
 import { restore } from "./lib/player";
 import { getState, useStore } from "./lib/store";
+import { flushPendingSync, pullAndSync, startCloudSync, stopCloudSync } from "./lib/sync";
 import { Algorithm } from "./views/Algorithm";
 import { Channels } from "./views/Channels";
 import { Feed } from "./views/Feed";
@@ -24,9 +42,14 @@ const TABS: { id: "feed" | "news" | "algorithm" | "library"; label: string; icon
 
 type AuthState = {
   checking: boolean;
+  needsServer: boolean;
+  serverUrl: string;
   protected: boolean;
   authenticated: boolean;
+  syncEnabled: boolean;
   email?: string;
+  name?: string;
+  authError?: string | null;
   methods: { google: boolean; password: boolean };
 };
 
@@ -37,45 +60,167 @@ export function App() {
   const newsSourceCount = useStore((s) => s.newsSources.length);
   const [auth, setAuth] = useState<AuthState>({
     checking: true,
+    needsServer: false,
+    serverUrl: "",
     protected: false,
     authenticated: true,
+    syncEnabled: false,
     methods: { google: false, password: false },
   });
+
+  const refreshAuth = useCallback(async () => {
+    await initApi();
+    const currentServer = getServerUrl();
+    if (needsServerConfig()) {
+      setAuth({
+        checking: false,
+        needsServer: true,
+        serverUrl: "",
+        protected: true,
+        authenticated: false,
+        syncEnabled: false,
+        methods: { google: false, password: false },
+      });
+      hideSplashScreen();
+      return;
+    }
+
+    try {
+      const res = await apiFetch("/api/auth/status", { cache: "no-store" });
+      const data = res.ok ? await res.json() : { protected: false, authenticated: true };
+      if (typeof data.mediaToken === "string") {
+        await setAuthTokens({ mediaToken: data.mediaToken });
+      }
+      setAuth({
+        checking: false,
+        needsServer: false,
+        serverUrl: currentServer,
+        protected: Boolean(data.protected),
+        authenticated: Boolean(data.authenticated),
+        syncEnabled: Boolean(data.syncEnabled),
+        email: typeof data.user?.email === "string" ? data.user.email : typeof data.email === "string" ? data.email : undefined,
+        name: typeof data.user?.name === "string" ? data.user.name : undefined,
+        authError: null,
+        methods: { google: Boolean(data.methods?.google), password: Boolean(data.methods?.password) },
+      });
+    } catch {
+      if (isNative()) {
+        setAuth({
+          checking: false,
+          needsServer: true,
+          serverUrl: currentServer,
+          protected: true,
+          authenticated: false,
+          syncEnabled: false,
+          authError: "Could not reach your Longform server. Check the server address or your connection.",
+          methods: { google: false, password: false },
+        });
+      } else {
+        setAuth({
+          checking: false,
+          needsServer: false,
+          serverUrl: currentServer,
+          protected: false,
+          authenticated: true,
+          syncEnabled: false,
+          methods: { google: false, password: false },
+        });
+      }
+    } finally {
+      hideSplashScreen();
+    }
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "auto") delete root.dataset.theme;
     else root.dataset.theme = theme;
+    syncStatusBar(theme);
   }, [theme]);
 
   useEffect(() => {
-    fetch("/api/auth/status", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : { protected: false, authenticated: true }))
-      .then((data) =>
-        setAuth({
-          checking: false,
-          protected: Boolean(data.protected),
-          authenticated: Boolean(data.authenticated),
-          email: typeof data.email === "string" ? data.email : undefined,
-          methods: { google: Boolean(data.methods?.google), password: Boolean(data.methods?.password) },
-        }),
-      )
-      .catch(() => setAuth({ checking: false, protected: false, authenticated: true, methods: { google: false, password: false } }));
+    refreshAuth();
+  }, [refreshAuth]);
+
+  // Native deep link handler for Google OAuth callback (longform://auth/callback?code=...)
+  useEffect(() => {
+    return onDeepLink(async (rawUrl) => {
+      if (!rawUrl.startsWith("longform://auth/callback")) return;
+      await closeAuthBrowser();
+      try {
+        const parsed = new URL(rawUrl);
+        const authError = parsed.searchParams.get("authError");
+        if (authError) {
+          setAuth((a) => ({ ...a, authError }));
+          return;
+        }
+        const code = parsed.searchParams.get("code");
+        if (!code) return;
+        const res = await apiFetch("/api/auth/native/exchange", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        if (!res.ok) {
+          setAuth((a) => ({ ...a, authError: "failed" }));
+          return;
+        }
+        const data = (await res.json()) as { token?: string; mediaToken?: string };
+        if (data.token) {
+          await setAuthTokens({ token: data.token, mediaToken: data.mediaToken ?? null });
+        }
+        await refreshAuth();
+      } catch {
+        setAuth((a) => ({ ...a, authError: "failed" }));
+      }
+    });
+  }, [refreshAuth]);
+
+  // If a session is revoked or expires mid-use, return cleanly to the sign-in screen.
+  useEffect(() => {
+    return onUnauthorized(async () => {
+      stopCloudSync();
+      await clearAuthTokens();
+      setAuth((a) => (a.protected ? { ...a, authenticated: false, syncEnabled: false, email: undefined, name: undefined } : a));
+    });
   }, []);
 
+  // Cloud sync lifecycle when authenticated.
   useEffect(() => {
-    if (auth.checking || !auth.authenticated) return;
+    if (auth.checking || !auth.authenticated || !auth.syncEnabled) {
+      stopCloudSync();
+      return;
+    }
+    startCloudSync();
+    return () => stopCloudSync();
+  }, [auth.checking, auth.authenticated, auth.syncEnabled]);
+
+  useEffect(() => {
+    if (auth.checking || !auth.authenticated || auth.needsServer) return;
     refreshFeeds();
     refreshNews();
-    const onVisible = () => {
-      if (!document.hidden) {
-        refreshFeeds();
-        refreshNews();
-      }
+    const onForeground = () => {
+      refreshFeeds();
+      refreshNews();
+      if (auth.syncEnabled) pullAndSync().catch(() => {});
     };
+    const onVisible = () => {
+      if (document.hidden) flushPendingSync();
+      else onForeground();
+    };
+    const onPageHide = () => flushPendingSync();
     document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [channelCount, newsSourceCount, auth.checking, auth.authenticated]);
+    window.addEventListener("pagehide", onPageHide);
+    const stopNativeLifecycle = onAppStateChange((isActive) => {
+      if (isActive) onForeground();
+      else flushPendingSync();
+    });
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pagehide", onPageHide);
+      stopNativeLifecycle();
+    };
+  }, [channelCount, newsSourceCount, auth.checking, auth.authenticated, auth.needsServer, auth.syncEnabled]);
 
   // Reopen with the last unfinished episode in the mini-player, paused.
   useEffect(() => {
@@ -88,10 +233,17 @@ export function App() {
 
   if (auth.checking) return null;
 
-  if (auth.protected && !auth.authenticated) {
+  if (auth.needsServer || (auth.protected && !auth.authenticated)) {
     return (
       <>
-        <Lock methods={auth.methods} onUnlocked={() => setAuth((a) => ({ ...a, authenticated: true }))} />
+        <Lock
+          methods={auth.methods}
+          needsServer={auth.needsServer}
+          serverUrl={auth.serverUrl}
+          initialError={auth.authError}
+          onServerConnected={refreshAuth}
+          onUnlocked={refreshAuth}
+        />
         <Toasts />
       </>
     );
@@ -107,8 +259,15 @@ export function App() {
   }
 
   const signOut = async () => {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    setAuth((a) => ({ ...a, authenticated: false, email: undefined }));
+    stopCloudSync();
+    await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    await clearAuthTokens();
+    setAuth((a) => ({ ...a, authenticated: false, syncEnabled: false, email: undefined, name: undefined }));
+  };
+
+  const changeServer = () => {
+    stopCloudSync();
+    setAuth((a) => ({ ...a, needsServer: true }));
   };
 
   const tab = tabOf(route);
@@ -131,7 +290,17 @@ export function App() {
         {route === "feed" && <Feed />}
         {route === "news" && <News />}
         {route === "algorithm" && <Algorithm />}
-        {route === "library" && <Library authProtected={auth.protected} authEmail={auth.email} onSignOut={signOut} />}
+        {route === "library" && (
+          <Library
+            authProtected={auth.protected}
+            authEmail={auth.email}
+            authName={auth.name}
+            syncEnabled={auth.syncEnabled}
+            serverUrl={auth.serverUrl}
+            onSignOut={signOut}
+            onChangeServer={isNative() ? changeServer : undefined}
+          />
+        )}
         {route === "library/channels" && <Channels />}
         {route === "library/sources" && <NewsSources />}
       </main>

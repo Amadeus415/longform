@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { intent, navigate } from "../lib/nav";
+import { openExternalUrl } from "../lib/native";
 import { findNewsSources, parseOpml, refreshNews } from "../lib/newsFeed";
 import { NEWS_STARTER_PACKS } from "../lib/newsStarter";
 import { addNewsSources, removeNewsSource, useStore } from "../lib/store";
@@ -138,7 +139,7 @@ export function NewsSources() {
                           subtitle: src.handle ?? src.siteUrl,
                           actions: [
                             ...(src.siteUrl
-                              ? [{ icon: "external" as const, label: "Open website", run: () => window.open(src.siteUrl, "_blank", "noopener") }]
+                              ? [{ icon: "external" as const, label: "Open website", run: () => openExternalUrl(src.siteUrl!) }]
                               : []),
                             {
                               icon: "unfollow",

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { apiMediaUrl } from "../lib/api";
 
 export const REPO_URL = "https://github.com/Amadeus415/longform";
 
@@ -107,7 +108,7 @@ export function Avatar({ id, title, size = 36, ring }: { id: string; title: stri
         <span className="avatar-initials" style={{ fontSize: size * 0.38 }}>{initials || "?"}</span>
       ) : (
         <img
-          src={`/api/avatar/${id}`}
+          src={apiMediaUrl(`/api/avatar/${id}`)}
           alt=""
           decoding="async"
           className={loaded ? "loaded" : ""}
@@ -127,7 +128,7 @@ export function NewsAvatar({ id, title, src, size = 36 }: { id: string; title: s
     setLoaded(false);
   }, [id, src]);
   const initials = title.replace(/[^\p{L}\p{N} ]/gu, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-  const imgSrc = src || `/api/news/avatar?id=${encodeURIComponent(id)}`;
+  const imgSrc = src || apiMediaUrl(`/api/news/avatar?id=${encodeURIComponent(id)}`);
   return (
     <span className="avatar" style={{ width: size, height: size }}>
       {failed ? (

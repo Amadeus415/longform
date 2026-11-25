@@ -1,19 +1,36 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { app } from "../server/app";
 import {
   checkLoginRateLimit,
+  createMediaToken,
   createSessionToken,
   isAllowedEmail,
+  readMediaToken,
   readSessionToken,
   recordFailedLogin,
   resetLoginRateLimit,
   verifyPassword,
   verifySessionToken,
 } from "../server/auth";
+import { createNativeAuthCode, resetDbForTests, upsertUser } from "../server/db";
 import { isPublicIp, isSafeHttpUrl } from "../server/news";
 
-const ENV_KEYS = ["APP_PASSWORD", "SESSION_SECRET", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "ALLOWED_EMAILS", "PUBLIC_URL"] as const;
+const ENV_KEYS = [
+  "APP_PASSWORD",
+  "SESSION_SECRET",
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+  "ALLOWED_EMAILS",
+  "ALLOW_PUBLIC_SIGNUP",
+  "ADMIN_EMAILS",
+  "PUBLIC_URL",
+  "DATABASE_PATH",
+] as const;
 const savedEnv = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
+
+beforeEach(() => {
+  resetDbForTests(":memory:");
+});
 
 afterEach(() => {
   for (const k of ENV_KEYS) {
@@ -47,14 +64,15 @@ describe("auth & session tokens", () => {
     expect(checkLoginRateLimit("test-ip", t + 16 * 60_000).ok).toBe(true);
   });
 
-  it("protects /api/* when APP_PASSWORD is set and sets HttpOnly cookie on login", async () => {
+  it("protects /api/* when APP_PASSWORD is set and supports both HttpOnly cookies and native Bearer tokens", async () => {
     process.env.APP_PASSWORD = "my-secret-passcode";
     process.env.SESSION_SECRET = "signing-key-123";
 
     const statusBefore = await app.request("/api/auth/status");
-    expect(await statusBefore.json()).toEqual({
+    expect(await statusBefore.json()).toMatchObject({
       protected: true,
       authenticated: false,
+      syncEnabled: false,
       methods: { google: false, password: true },
     });
 
@@ -71,23 +89,37 @@ describe("auth & session tokens", () => {
     const goodLogin = await app.request("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-forwarded-for": "test-ip" },
-      body: JSON.stringify({ password: "my-secret-passcode" }),
+      body: JSON.stringify({ password: "my-secret-passcode", native: true }),
     });
     expect(goodLogin.status).toBe(200);
     const cookie = goodLogin.headers.get("set-cookie") ?? "";
     expect(cookie).toContain("longform_session=");
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Lax");
+    const loginBody = (await goodLogin.json()) as { ok: boolean; token?: string; mediaToken?: string };
+    expect(loginBody.ok).toBe(true);
+    expect(loginBody.token).toBeTruthy();
+    expect(loginBody.mediaToken).toBeTruthy();
 
     const cookiePair = cookie.split(";")[0];
     const statusAfter = await app.request("/api/auth/status", { headers: { Cookie: cookiePair } });
-    expect(await statusAfter.json()).toEqual({
+    expect(await statusAfter.json()).toMatchObject({
       protected: true,
       authenticated: true,
+      syncEnabled: true,
       methods: { google: false, password: true },
     });
     expect(statusAfter.headers.get("x-content-type-options")).toBe("nosniff");
     expect(statusAfter.headers.get("x-frame-options")).toBe("DENY");
+
+    // Native Bearer token also authenticates cleanly.
+    const bearerStatus = await app.request("/api/auth/status", {
+      headers: { Authorization: `Bearer ${loginBody.token}` },
+    });
+    expect(await bearerStatus.json()).toMatchObject({
+      authenticated: true,
+      syncEnabled: true,
+    });
   });
 
   it("supports Google OAuth PKCE + strict ALLOWED_EMAILS allowlist and instant revocation", async () => {
@@ -100,18 +132,19 @@ describe("auth & session tokens", () => {
     expect(isAllowedEmail("stranger@gmail.com")).toBe(false);
 
     const status = await app.request("/api/auth/status");
-    expect(await status.json()).toEqual({
+    expect(await status.json()).toMatchObject({
       protected: true,
       authenticated: false,
+      publicSignup: false,
       methods: { google: true, password: false },
     });
 
-    const start = await app.request("https://longform-beta.vercel.app/api/auth/google");
+    const start = await app.request("https://longform.fly.dev/api/auth/google");
     expect(start.status).toBe(302);
     const loc = new URL(start.headers.get("location")!);
     expect(loc.origin).toBe("https://accounts.google.com");
     expect(loc.searchParams.get("client_id")).toBe("client-123.apps.googleusercontent.com");
-    expect(loc.searchParams.get("redirect_uri")).toBe("https://longform-beta.vercel.app/api/auth/google/callback");
+    expect(loc.searchParams.get("redirect_uri")).toBe("https://longform.fly.dev/api/auth/google/callback");
     expect(loc.searchParams.get("code_challenge_method")).toBe("S256");
     expect(loc.searchParams.get("code_challenge")).toBeTruthy();
     expect(start.headers.get("set-cookie")).toContain("longform_oauth=");
@@ -122,6 +155,57 @@ describe("auth & session tokens", () => {
     // Removing alice from ALLOWED_EMAILS immediately invalidates her token.
     process.env.ALLOWED_EMAILS = "bob@example.com";
     expect(readSessionToken(aliceToken, 1_000_010)).toBeNull();
+
+    // Flipping ALLOW_PUBLIC_SIGNUP=true allows any verified Google email to join.
+    process.env.ALLOW_PUBLIC_SIGNUP = "true";
+    expect(isAllowedEmail("newfriend@gmail.com")).toBe(true);
+  });
+
+  it("scopes media tokens strictly to media routes and exchanges native OAuth codes once", async () => {
+    process.env.GOOGLE_CLIENT_ID = "client-123.apps.googleusercontent.com";
+    process.env.GOOGLE_CLIENT_SECRET = "secret-xyz";
+    process.env.ALLOW_PUBLIC_SIGNUP = "true";
+    process.env.SESSION_SECRET = "signing-key-media";
+
+    const user = upsertUser({ id: "google:sub-1", email: "user@example.com", name: "User One", role: "user" })!;
+    const mediaToken = createMediaToken({ uid: user.id, email: user.email ?? undefined });
+    expect(readMediaToken(mediaToken)).toMatchObject({ uid: "google:sub-1", email: "user@example.com" });
+
+    // Media token must NEVER grant access to /api/me/state.
+    const stateBlocked = await app.request(`/api/me/state?mt=${encodeURIComponent(mediaToken)}`);
+    expect(stateBlocked.status).toBe(401);
+
+    // Media token passes auth on /api/avatar/:id (400 = invalid channel id, proving auth passed).
+    const mediaAllowed = await app.request(`/api/avatar/not-a-channel?mt=${encodeURIComponent(mediaToken)}`);
+    expect(mediaAllowed.status).toBe(400);
+
+    // Native one-time code exchanges once and cannot be replayed.
+    const code = createNativeAuthCode(user)!;
+    const first = await app.request("/api/auth/native/exchange", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    expect(first.status).toBe(200);
+    const exchanged = (await first.json()) as { ok: boolean; token: string; mediaToken: string; user: { email: string } };
+    expect(exchanged.ok).toBe(true);
+    expect(exchanged.token).toBeTruthy();
+    expect(exchanged.user.email).toBe("user@example.com");
+
+    const replay = await app.request("/api/auth/native/exchange", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    expect(replay.status).toBe(401);
+  });
+
+  it("allows Capacitor native CORS origins on /api/*", async () => {
+    const res = await app.request("/api/health", {
+      headers: { Origin: "capacitor://localhost" },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("access-control-allow-origin")).toBe("capacitor://localhost");
   });
 });
 

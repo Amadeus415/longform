@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { apiFetch, apiUrl, setAuthTokens, setServerUrl, testServerHealth } from "../lib/api";
+import { isNative, openAuthBrowser } from "../lib/native";
 import { Icon } from "./ui";
 
 const AUTH_ERRORS: Record<string, string> = {
-  unauthorized: "That Google account isn’t authorized for this app.",
+  unauthorized: "That Google account isn’t authorized for this server.",
   cancelled: "Google sign-in was cancelled.",
   expired: "Sign-in session expired. Please try again.",
   failed: "Could not complete Google sign-in. Try again in a moment.",
@@ -11,17 +13,37 @@ const AUTH_ERRORS: Record<string, string> = {
 
 export function Lock({
   methods,
+  needsServer = false,
+  serverUrl = "",
+  initialError = null,
+  onServerConnected,
   onUnlocked,
 }: {
   methods: { google: boolean; password: boolean };
-  onUnlocked: () => void;
+  needsServer?: boolean;
+  serverUrl?: string;
+  initialError?: string | null;
+  onServerConnected: () => Promise<void>;
+  onUnlocked: () => Promise<void>;
 }) {
+  const native = isNative();
+  const [editingServer, setEditingServer] = useState(needsServer);
+  const [serverInput, setServerInput] = useState(serverUrl);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(() => {
+    if (initialError) return AUTH_ERRORS[initialError] ?? initialError;
     const code = new URLSearchParams(location.search).get("authError");
     return code ? AUTH_ERRORS[code] ?? "Sign-in failed." : null;
   });
+
+  useEffect(() => {
+    setEditingServer(needsServer);
+  }, [needsServer]);
+
+  useEffect(() => {
+    if (initialError) setError(AUTH_ERRORS[initialError] ?? initialError);
+  }, [initialError]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -32,19 +54,43 @@ export function Lock({
     }
   }, []);
 
-  const submit = async (e: FormEvent) => {
+  const connectServer = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!serverInput.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await testServerHealth(serverInput);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      await setServerUrl(result.url);
+      setServerInput(result.url);
+      setEditingServer(false);
+      await onServerConnected();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitPassword = async (e: FormEvent) => {
     e.preventDefault();
     if (!password || busy) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, native }),
       });
       if (res.ok) {
-        onUnlocked();
+        const data = (await res.json().catch(() => ({}))) as { token?: string; mediaToken?: string };
+        if (native && data.token) {
+          await setAuthTokens({ token: data.token, mediaToken: data.mediaToken ?? null });
+        }
+        await onUnlocked();
         return;
       }
       const data = await res.json().catch(() => ({}));
@@ -56,24 +102,81 @@ export function Lock({
     }
   };
 
+  const startGoogle = async () => {
+    setError(null);
+    const url = apiUrl(native ? "/api/auth/google?client=native" : "/api/auth/google");
+    try {
+      await openAuthBrowser(url);
+    } catch {
+      setError("Could not open Google sign-in.");
+    }
+  };
+
+  const hostLabel = (() => {
+    try {
+      return serverUrl ? new URL(serverUrl).host : "";
+    } catch {
+      return serverUrl;
+    }
+  })();
+
+  if (editingServer) {
+    return (
+      <div className="lock-screen">
+        <div className="lock-card">
+          <img className="appicon" src="/icons/icon-512.png" alt="" />
+          <h1>Connect to Longform</h1>
+          <p className="lede">Enter your always-on Longform server address to stream audio, read news, and sync across devices.</p>
+
+          <form className="lock-form" onSubmit={connectServer}>
+            <label className="field">
+              <Icon name="rss" size={18} />
+              <input
+                type="url"
+                inputMode="url"
+                value={serverInput}
+                onChange={(e) => (setServerInput(e.target.value), setError(null))}
+                placeholder="https://longform.fly.dev"
+                autoCapitalize="off"
+                autoCorrect="off"
+                autoFocus
+              />
+            </label>
+            <button className="btn accent big press" type="submit" disabled={!serverInput.trim() || busy}>
+              {busy ? "Connecting…" : "Connect"}
+            </button>
+          </form>
+
+          {!needsServer && serverUrl && (
+            <button className="lock-link" type="button" onClick={() => (setEditingServer(false), setError(null))}>
+              Cancel
+            </button>
+          )}
+
+          {error && <p className="lock-error" role="alert">{error}</p>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="lock-screen">
       <div className="lock-card">
         <img className="appicon" src="/icons/icon-512.png" alt="" />
         <h1>Longform</h1>
-        <p className="lede">Sign in to open your videos and daily news brief.</p>
+        <p className="lede">Sign in to open your videos, lock-screen audio, and daily news brief.</p>
 
         {methods.google && (
-          <a className="btn big google-btn press" href="/api/auth/google">
+          <button className="btn big google-btn press" type="button" onClick={startGoogle}>
             <GoogleMark />
             <span>Continue with Google</span>
-          </a>
+          </button>
         )}
 
         {methods.google && methods.password && <div className="lock-divider"><span>or passcode</span></div>}
 
         {methods.password && (
-          <form className="lock-form" onSubmit={submit}>
+          <form className="lock-form" onSubmit={submitPassword}>
             <label className="field">
               <Icon name="you" size={18} />
               <input
@@ -92,6 +195,12 @@ export function Lock({
         )}
 
         {error && <p className="lock-error" role="alert">{error}</p>}
+
+        {native && hostLabel && (
+          <button className="lock-link" type="button" onClick={() => (setEditingServer(true), setError(null))}>
+            Server: {hostLabel} · Change
+          </button>
+        )}
       </div>
     </div>
   );

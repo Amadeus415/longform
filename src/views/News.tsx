@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { EventCluster } from "../lib/brief";
 import { contains } from "../lib/filter";
 import { navigate } from "../lib/nav";
+import { openExternalUrl } from "../lib/native";
 import { refreshNews, useNewsStatus } from "../lib/newsFeed";
 import { NEWS_STARTER_PACKS } from "../lib/newsStarter";
 import { addNewsSources, markNewsRead, markNewsUnread, removeNewsSource, useStore } from "../lib/store";
@@ -79,9 +80,9 @@ export function News() {
       title: item.title,
       subtitle: `${item.sourceTitle} · ${ago(item.published)}`,
       actions: [
-        { icon: "external", label: item.domain ? `Open on ${item.domain}` : "Open original", run: () => window.open(item.url, "_blank", "noopener") },
+        { icon: "external", label: item.domain ? `Open on ${item.domain}` : "Open original", run: () => openExternalUrl(item.url) },
         ...(item.discussionUrl
-          ? [{ icon: "news" as const, label: item.sourceKind === "hn" ? "Open Hacker News thread" : "Open Bluesky post", run: () => window.open(item.discussionUrl, "_blank", "noopener") }]
+          ? [{ icon: "news" as const, label: item.sourceKind === "hn" ? "Open Hacker News thread" : "Open Bluesky post", run: () => openExternalUrl(item.discussionUrl!) }]
           : []),
         isRead
           ? { icon: "restore", label: "Mark as unread", run: () => markNewsUnread([item.id]) }

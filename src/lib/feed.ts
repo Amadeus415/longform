@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { apiFetch } from "./api";
 import { getState, setState } from "./store";
 import type { ChannelFeed, ChannelHit } from "./types";
 
@@ -33,7 +34,7 @@ export function refreshFeeds(force = false): Promise<void> {
   const worker = async () => {
     for (let channel = queue.shift(); channel; channel = queue.shift()) {
       try {
-        const response = await fetch(`/api/channel/${channel.id}`, force ? { cache: "reload" } : undefined);
+        const response = await apiFetch(`/api/channel/${channel.id}`, force ? { cache: "reload" } : undefined);
         if (!response.ok) throw new Error(String(response.status));
         const feed = (await response.json()) as ChannelFeed;
         setState((s) => ({
@@ -54,7 +55,7 @@ export function refreshFeeds(force = false): Promise<void> {
 }
 
 export async function findChannels(query: string): Promise<ChannelHit[]> {
-  const response = await fetch(`/api/channels/find?q=${encodeURIComponent(query)}`);
+  const response = await apiFetch(`/api/channels/find?q=${encodeURIComponent(query)}`);
   if (!response.ok) throw new Error("Search failed. Try again in a moment.");
   return response.json();
 }

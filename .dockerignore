@@ -1,4 +1,10 @@
 node_modules
 dist
-docs
+data
 .git
+.vercel
+.env
+.env.local
+ios
+android
+docs/screenshots

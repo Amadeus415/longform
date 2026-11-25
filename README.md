@@ -36,7 +36,8 @@ Inspired by Andrej Karpathy's [HackerTube](https://hackertube.org).
 - **Listen or Watch** — Audio-only playback survives a locked screen, with lock-screen controls. Switch to video at any second.
 - **Made for long episodes** — Resume where you left off, chapters, 1–2× speed, −15 / +30 s skips, and a weekly listening summary.
 - **Daily News Brief (zero cost)** — A calm **News** tab alongside your videos using public Bluesky feeds, RSS/Atom feeds, and Hacker News (no API keys). Multi-source stories cluster automatically into **Key Events**, standalone essays surface as **Key Insights**, and every hidden post has an explainable rule.
-- **Private by design** — No account, no tracking. Export a backup file to move devices.
+- **Web + Native Mobile, one foundation** — Works as a web app/PWA and builds directly into a native **iOS & Android app** via Capacitor (with native background audio, lock-screen controls, haptics, and Sign in with Google).
+- **Multi-user accounts & sync** — Sign in with Google to sync your channels, news sources, rules, and progress across web and mobile. Private allowlist by default (`ALLOWED_EMAILS`), with one env var (`ALLOW_PUBLIC_SIGNUP=true`) to open it to others. Export a JSON backup anytime.
 
 ## The algorithm
 
@@ -60,23 +61,23 @@ Words match whole words, ignoring case and accents: `clip` hides “Best clip”
 <br><br>
 </div>
 
-## Put it on your iPhone
+## Put it on your phone (always-on + native mobile app)
 
-Longform is a web app you add to your home screen. It runs on a small server, which is your Mac to start with.
+Longform runs both in the browser (PWA) and as a native **iOS / Android app** built on the exact same React + Vite foundation via Capacitor.
 
-```sh
-brew install node yt-dlp
-npm install
-npm start          # → Longform server on http://localhost:8787
-```
-
-1. Find your Mac's address in **System Settings → Wi-Fi → Details** (for example `192.168.1.20`).
-2. On your iPhone, on the same Wi-Fi, open `http://192.168.1.20:8787` in Safari.
-3. Tap **Share → Add to Home Screen**.
-
-**Away from home:** install [Tailscale](https://tailscale.com) on both devices and open `http://<your-mac>:8787` from anywhere. `tailscale serve 8787` adds HTTPS, which also lets the app work offline.
-
-> **Why not the cloud?** YouTube often blocks audio requests from data-center IPs. The feed works on any host; only Listen mode needs a home connection.
+- **Access anywhere (laptop off):** Deploy the included `Dockerfile` to **Fly.io** (`fly.toml`) or **Railway** (`railway.toml`) with a persistent `/data` volume for SQLite sync and `yt-dlp` audio streaming. Full step-by-step guide in [`docs/DEPLOY.md`](docs/DEPLOY.md).
+- **Native iOS / Android app:**
+  ```sh
+  VITE_API_URL="https://your-longform-server.fly.dev" npm run build:mobile
+  npm run cap:ios      # opens Xcode → Run on iPhone or Archive for TestFlight
+  npm run cap:android  # opens Android Studio
+  ```
+- **Local Mac dev / home Wi-Fi:**
+  ```sh
+  brew install node yt-dlp
+  npm install
+  npm start            # → Longform server on http://localhost:8787
+  ```
 
 <details>
 <summary><b>Development and Docker</b></summary>

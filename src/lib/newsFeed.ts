@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { apiFetch } from "./api";
 import { getState, setState } from "./store";
 import type { NewsSource, NewsSourceFeed, NewsSourceHit } from "./types";
 
@@ -33,7 +34,7 @@ export function refreshNews(force = false): Promise<void> {
   const worker = async () => {
     for (let source = queue.shift(); source; source = queue.shift()) {
       try {
-        const res = await fetch(`/api/news/source?id=${encodeURIComponent(source.id)}`, force ? { cache: "reload" } : undefined);
+        const res = await apiFetch(`/api/news/source?id=${encodeURIComponent(source.id)}`, force ? { cache: "reload" } : undefined);
         if (!res.ok) throw new Error(String(res.status));
         const feed = (await res.json()) as NewsSourceFeed;
         setState((s) => ({
@@ -64,7 +65,7 @@ export function refreshNews(force = false): Promise<void> {
 }
 
 export async function findNewsSources(query: string): Promise<NewsSourceHit[]> {
-  const res = await fetch(`/api/news/find?q=${encodeURIComponent(query)}`);
+  const res = await apiFetch(`/api/news/find?q=${encodeURIComponent(query)}`);
   if (!res.ok) throw new Error("Search failed. Try again in a moment.");
   return res.json();
 }

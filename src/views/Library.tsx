@@ -1,19 +1,54 @@
 import { useMemo, useRef, useState } from "react";
 import { refreshFeeds } from "../lib/feed";
 import { navigate } from "../lib/nav";
+import { isNative, openExternalUrl } from "../lib/native";
 import { refreshNews } from "../lib/newsFeed";
 import { play } from "../lib/player";
 import { dayKey, exportData, importData, updateSettings, useStore } from "../lib/store";
+import { pullAndSync, useSyncStatus } from "../lib/sync";
 import { toVideo } from "../lib/useFeed";
-import { Avatar, Frame, Icon, NewsAvatar, REPO_URL, Segmented, Toggle, span, toast } from "./ui";
+import { Avatar, Frame, Icon, NewsAvatar, REPO_URL, Segmented, Toggle, ago, span, toast } from "./ui";
 
-export function Library({ authProtected = false, authEmail, onSignOut }: { authProtected?: boolean; authEmail?: string; onSignOut?: () => void }) {
+export function Library({
+  authProtected = false,
+  authEmail,
+  authName,
+  syncEnabled = false,
+  serverUrl = "",
+  onSignOut,
+  onChangeServer,
+}: {
+  authProtected?: boolean;
+  authEmail?: string;
+  authName?: string;
+  syncEnabled?: boolean;
+  serverUrl?: string;
+  onSignOut?: () => void;
+  onChangeServer?: () => void;
+}) {
   const settings = useStore((s) => s.settings);
   const channels = useStore((s) => s.channels);
   const newsSources = useStore((s) => s.newsSources);
   const progress = useStore((s) => s.progress);
+  const sync = useSyncStatus();
   const backup = useRef<HTMLInputElement>(null);
   const recent = useMemo(() => Object.values(progress).sort((a, b) => b.at - a.at).slice(0, 12), [progress]);
+  const native = isNative();
+
+  const hostLabel = (() => {
+    try {
+      return serverUrl ? new URL(serverUrl).host : "";
+    } catch {
+      return serverUrl;
+    }
+  })();
+
+  const syncSubtitle = (() => {
+    if (sync.state === "syncing") return "Syncing…";
+    if (sync.state === "offline" || sync.state === "error") return sync.error || "Sync paused";
+    if (sync.lastSyncedAt) return `Synced ${ago(new Date(sync.lastSyncedAt).toISOString()).toLowerCase()}`;
+    return "Tap to sync across your devices";
+  })();
 
   return (
     <div className="view">
@@ -83,6 +118,48 @@ export function Library({ authProtected = false, authEmail, onSignOut }: { authP
           </div>
         </div>
 
+        {(authProtected || syncEnabled || (native && hostLabel)) && (
+          <>
+            <div className="section-head"><h2>Account & Sync</h2></div>
+            <div className="group">
+              {syncEnabled && (
+                <button
+                  className="row with-icon"
+                  onClick={() => {
+                    pullAndSync().then(() => toast("Library synced"));
+                  }}
+                >
+                  <span className="lead"><Icon name="refresh" /></span>
+                  <span className="label">
+                    {authName || authEmail || "Cloud sync"}
+                    <small>{authName && authEmail ? `${authEmail} · ${syncSubtitle}` : syncSubtitle}</small>
+                  </span>
+                  <span className="value">{sync.state === "syncing" ? "Syncing" : "Sync now"}</span>
+                </button>
+              )}
+              {native && hostLabel && onChangeServer && (
+                <button className="row with-icon" onClick={onChangeServer}>
+                  <span className="lead"><Icon name="rss" /></span>
+                  <span className="label">
+                    Server
+                    <small>{hostLabel}</small>
+                  </span>
+                  <span className="chev"><Icon name="right" size={18} /></span>
+                </button>
+              )}
+              {authProtected && onSignOut && (
+                <button className="row with-icon" onClick={onSignOut}>
+                  <span className="lead"><Icon name="you" /></span>
+                  <span className="label">
+                    Sign out on this device
+                    <small>{authEmail ? `Signed in as ${authEmail}` : "Require sign-in again on this device"}</small>
+                  </span>
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
         <div className="section-head"><h2>Your data</h2></div>
         <div className="group">
           <button
@@ -102,7 +179,9 @@ export function Library({ authProtected = false, authEmail, onSignOut }: { authP
           </button>
         </div>
         <p className="group-note" style={{ margin: "8px 28px 0", color: "var(--text-2)", fontSize: 13 }}>
-          Everything stays on this device. There’s no account.
+          {syncEnabled
+            ? "Your channels, news sources, rules, and progress sync automatically across web and mobile."
+            : "Everything stays on this device. Sign in on a cloud server to sync across devices."}
         </p>
         <input
           ref={backup}
@@ -124,33 +203,18 @@ export function Library({ authProtected = false, authEmail, onSignOut }: { authP
           }}
         />
 
-        {authProtected && onSignOut && (
-          <>
-            <div className="section-head"><h2>Security</h2></div>
-            <div className="group">
-              <button className="row with-icon" onClick={onSignOut}>
-                <span className="lead"><Icon name="you" /></span>
-                <span className="label">
-                  Sign out on this device
-                  <small>{authEmail ? `Signed in as ${authEmail}` : "Require sign-in again on this browser"}</small>
-                </span>
-              </button>
-            </div>
-          </>
-        )}
-
         <div className="section-head"><h2>About</h2></div>
         <div className="group">
-          <a className="row with-icon" href={REPO_URL} target="_blank" rel="noreferrer">
+          <button className="row with-icon" onClick={() => openExternalUrl(REPO_URL)}>
             <span className="lead"><Icon name="code" /></span>
             <span className="label">Longform is open source<small>Read the code, suggest channels, report bugs</small></span>
             <span className="chev"><Icon name="external" size={18} /></span>
-          </a>
-          <a className="row with-icon" href={`${REPO_URL}/blob/main/src/lib/filter.ts`} target="_blank" rel="noreferrer">
+          </button>
+          <button className="row with-icon" onClick={() => openExternalUrl(`${REPO_URL}/blob/main/src/lib/filter.ts`)}>
             <span className="lead"><Icon name="algorithm" /></span>
             <span className="label">How the algorithm works<small>The whole filter is about 150 lines</small></span>
             <span className="chev"><Icon name="external" size={18} /></span>
-          </a>
+          </button>
         </div>
       </div>
     </div>
