@@ -80,62 +80,107 @@ export function isSafeHttpUrl(raw: string): boolean {
   return true;
 }
 
-async function assertSafeUrl(raw: string): Promise<URL> {
+async function assertSafeUrl(raw: string): Promise<{ url: URL; pinnedIp: string; family: 4 | 6 }> {
   if (!isSafeHttpUrl(raw)) throw new Error("Blocked unsafe URL");
   const u = new URL(raw);
   const host = u.hostname.replace(/^\[|\]$/g, "");
-  if (!isIP(host)) {
-    const records = await lookup(host, { all: true });
-    if (!records.length || records.some((r) => !isPublicIp(r.address))) {
-      throw new Error("Blocked private network target");
-    }
+  const ipVer = isIP(host);
+  if (ipVer === 4 || ipVer === 6) {
+    return { url: u, pinnedIp: host, family: ipVer };
   }
-  return u;
+  const records = await lookup(host, { all: true });
+  if (!records.length || records.some((r) => !isPublicIp(r.address))) {
+    throw new Error("Blocked private network target");
+  }
+  const first = records[0];
+  return { url: u, pinnedIp: first.address, family: first.family === 6 ? 6 : 4 };
+}
+
+/**
+ * Perform one HTTP(S) GET pinned directly to the already-validated public IP address
+ * (preserving TLS SNI and Host header) so DNS rebinding between lookup and connect is impossible!
+ */
+async function pinnedHttpGet(
+  url: URL,
+  pinnedIp: string,
+  family: 4 | 6,
+  headers: Record<string, string>,
+  maxBytes: number,
+): Promise<{ bytes: Uint8Array; contentType: string; status: number; location?: string }> {
+  const isHttps = url.protocol === "https:";
+  const mod = isHttps ? await import("node:https") : await import("node:http");
+  return new Promise((resolve, reject) => {
+    const opts: import("node:https").RequestOptions = {
+      protocol: url.protocol,
+      hostname: url.hostname,
+      port: url.port ? Number(url.port) : isHttps ? 443 : 80,
+      path: `${url.pathname}${url.search}`,
+      method: "GET",
+      headers: { "User-Agent": UA, Host: url.host, ...headers },
+      timeout: FETCH_TIMEOUT,
+      ...(isHttps ? { servername: url.hostname } : {}),
+      lookup: ((_hostname: string, lookupOpts: unknown, cb: (...args: unknown[]) => void) => {
+        const all = typeof lookupOpts === "object" && lookupOpts !== null && (lookupOpts as { all?: boolean }).all;
+        if (all) cb(null, [{ address: pinnedIp, family }]);
+        else cb(null, pinnedIp, family);
+      }) as import("node:net").LookupFunction,
+    };
+    const req = mod.request(opts, (res) => {
+        const status = res.statusCode ?? 0;
+        const contentType = String(res.headers["content-type"] ?? "");
+        const location = typeof res.headers.location === "string" ? res.headers.location : undefined;
+        if (status >= 300 && status < 400) {
+          res.resume();
+          resolve({ bytes: new Uint8Array(0), contentType, status, location });
+          return;
+        }
+        const contentLength = Number(res.headers["content-length"] ?? 0);
+        if (contentLength > maxBytes) {
+          res.destroy();
+          reject(new Error("Response too large"));
+          return;
+        }
+        const chunks: Buffer[] = [];
+        let received = 0;
+        res.on("data", (chunk: Buffer) => {
+          received += chunk.byteLength;
+          if (received > maxBytes) {
+            res.destroy();
+            reject(new Error("Response too large"));
+            return;
+          }
+          chunks.push(chunk);
+        });
+        res.on("end", () => {
+          resolve({ bytes: new Uint8Array(Buffer.concat(chunks)), contentType, status, location });
+        });
+        res.on("error", reject);
+      },
+    );
+    req.on("timeout", () => {
+      req.destroy(new Error("Request timed out"));
+    });
+    req.on("error", reject);
+    req.end();
+  });
 }
 
 async function safeFetch(url: string, headers: Record<string, string>, maxBytes: number): Promise<{ bytes: Uint8Array; contentType: string; status: number; ok: boolean }> {
   let current = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-    await assertSafeUrl(current);
-    const res = await fetch(current, {
-      headers: { "User-Agent": UA, ...headers },
-      redirect: "manual",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT),
-    });
+    const { url: parsed, pinnedIp, family } = await assertSafeUrl(current);
+    const res = await pinnedHttpGet(parsed, pinnedIp, family, headers, maxBytes);
     if (res.status >= 300 && res.status < 400) {
-      const location = res.headers.get("location");
-      await res.body?.cancel();
-      if (!location || hop === MAX_REDIRECTS) throw new Error("Too many redirects");
-      current = new URL(location, current).toString();
+      if (!res.location || hop === MAX_REDIRECTS) throw new Error("Too many redirects");
+      current = new URL(res.location, current).toString();
       continue;
     }
-    const contentLength = Number(res.headers.get("content-length") ?? 0);
-    if (contentLength > maxBytes) {
-      await res.body?.cancel();
-      throw new Error("Response too large");
-    }
-    const chunks: Uint8Array[] = [];
-    let received = 0;
-    const reader = res.body?.getReader();
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        received += value.byteLength;
-        if (received > maxBytes) {
-          await reader.cancel();
-          throw new Error("Response too large");
-        }
-        chunks.push(value);
-      }
-    }
-    const bytes = new Uint8Array(received);
-    let offset = 0;
-    for (const chunk of chunks) {
-      bytes.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return { bytes, contentType: res.headers.get("content-type") ?? "", status: res.status, ok: res.ok };
+    return {
+      bytes: res.bytes,
+      contentType: res.contentType,
+      status: res.status,
+      ok: res.status >= 200 && res.status < 300,
+    };
   }
   throw new Error("Too many redirects");
 }

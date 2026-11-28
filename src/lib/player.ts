@@ -71,10 +71,22 @@ export function embedStateChanged(state: number): void {
   } else if (state === 3) set({ loading: true });
 }
 
+/** Called by the embed when YouTube reports a playback or configuration error. */
+export function embedFailed(): void {
+  embed = null;
+  if (ps.mode === "watch") set({ playing: false, loading: false });
+}
+
 export function embedTick(): void {
   if (!embed || ps.mode !== "watch") return;
-  const time = embed.getCurrentTime() || 0;
-  const duration = embed.getDuration() || ps.duration;
+  let time = ps.time;
+  let duration = ps.duration;
+  try {
+    time = embed.getCurrentTime?.() || 0;
+    duration = embed.getDuration?.() || ps.duration;
+  } catch {
+    return;
+  }
   if (ps.playing) embedPlayingAt = Date.now();
   set({ time, duration });
   countListening();
@@ -279,7 +291,13 @@ export function close(): void {
 }
 
 export function currentTime(): number {
-  if (ps.mode === "watch" && embed) return embed.getCurrentTime() || ps.time;
+  if (ps.mode === "watch" && embed) {
+    try {
+      return embed.getCurrentTime?.() || ps.time;
+    } catch {
+      return ps.time;
+    }
+  }
   if (pendingSeek !== null) return pendingSeek;
   if (ps.video && audio?.getAttribute("src") === audioSrc(ps.video.id)) return audio.currentTime || ps.time;
   return ps.time;
@@ -323,7 +341,7 @@ function persist(): void {
 }
 
 function persistEvery(): void {
-  if (Date.now() - lastSaved > 10_000) persist();
+  if (Date.now() - lastSaved > 30_000) persist();
 }
 
 // ---------- lock screen, background ----------

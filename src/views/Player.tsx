@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { clock } from "../lib/filter";
+import { clock, lookupJudgment } from "../lib/filter";
 import { openExternalUrl } from "../lib/native";
 import {
-  RATES, attachEmbed, close as stop, embedStateChanged, embedTick, expand, getPlayer, minimize, play, seek, setMode, setRate, skip, toggle,
+  RATES, attachEmbed, close as stop, embedFailed, embedStateChanged, embedTick, expand, getPlayer, minimize, play, seek, setMode, setRate, skip, toggle,
   usePlayer,
 } from "../lib/player";
-import { getState, useStore } from "../lib/store";
+import { currentRules, getState, useStore } from "../lib/store";
 import type { Video } from "../lib/types";
 import { finish } from "./actions";
+import { InlineRatingBar, openRatingSheet } from "./Rating";
 import { Avatar, Frame, Icon, Segmented, ago, showActions } from "./ui";
 
 export function MiniPlayer() {
@@ -42,6 +43,9 @@ export function MiniPlayer() {
 export function PlayerSheet() {
   const p = usePlayer();
   const rate = useStore((s) => s.settings.rate);
+  const history = useStore((s) => s.history);
+  const judgments = useStore((s) => s.judgments);
+  const ratings = useStore((s) => s.ratings);
   const panel = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const [closing, setClosing] = useState(false);
@@ -64,6 +68,8 @@ export function PlayerSheet() {
   const watching = p.mode === "watch";
   const chapters = video.chapters ?? [];
   const current = chapters.findLastIndex(([t]) => t <= p.time + 0.5);
+  const judgment = lookupJudgment(video.id, currentRules({ history } as never), judgments);
+  const existingRating = ratings[video.id];
 
   function close() {
     setClosing(true);
@@ -115,6 +121,11 @@ export function PlayerSheet() {
       title: video.title,
       subtitle: video.channel,
       actions: [
+        {
+          icon: existingRating ? "starFill" : "star",
+          label: existingRating ? `Edit rating (${existingRating.score}/10)` : "Rate video (1–10)",
+          run: () => openRatingSheet(video, judgment),
+        },
         { icon: "done", label: "Mark as finished", run: done },
         { icon: "external", label: "Open in YouTube", run: () => openExternalUrl(`https://www.youtube.com/watch?v=${video.id}&t=${Math.floor(p.time)}s`) },
       ],
@@ -162,6 +173,8 @@ export function PlayerSheet() {
               </div>
             </>
           )}
+
+          <InlineRatingBar video={video} judgment={judgment} />
 
           {chapters.length > 0 && (
             <>
@@ -232,43 +245,104 @@ declare global {
 let api: Promise<any> | null = null;
 function loadYouTubeApi(): Promise<any> {
   if (window.YT?.Player) return Promise.resolve(window.YT);
-  api ??= new Promise((resolve) => {
+  api ??= new Promise((resolve, reject) => {
     window.onYouTubeIframeAPIReady = () => resolve(window.YT);
     const script = document.createElement("script");
     script.src = "https://www.youtube.com/iframe_api";
+    script.onerror = () => {
+      api = null;
+      reject(new Error("Could not load YouTube player"));
+    };
     document.head.append(script);
   });
   return api;
 }
 
+type EmbedError = { title: string; body: string };
+
+function describeEmbedError(code: number): EmbedError {
+  if (code === 101 || code === 150) {
+    return {
+      title: "Embedding disabled by uploader",
+      body: "This channel doesn’t allow video playback outside YouTube.",
+    };
+  }
+  if (code === 100) {
+    return {
+      title: "Video unavailable",
+      body: "This video may be private or removed on YouTube.",
+    };
+  }
+  if (code === 153) {
+    return {
+      title: "Video player blocked",
+      body: "YouTube blocked embedded playback in this browser.",
+    };
+  }
+  return {
+    title: "Couldn’t play video here",
+    body: "Try listening in Audio mode or watching on YouTube.",
+  };
+}
+
 function Watch({ video }: { video: Video }) {
   const host = useRef<HTMLDivElement>(null);
+  const [embedErr, setEmbedErr] = useState<EmbedError | null>(null);
+
   useEffect(() => {
     let player: any;
     let timer: ReturnType<typeof setInterval> | undefined;
     let cancelled = false;
+    let errored = false;
+    setEmbedErr(null);
     const start = Math.floor(getPlayer().time);
-    loadYouTubeApi().then((YT) => {
-      if (cancelled || !host.current) return;
-      const mount = document.createElement("div");
-      host.current.replaceChildren(mount);
-      player = new YT.Player(mount, {
-        host: "https://www.youtube-nocookie.com",
-        videoId: video.id,
-        width: "100%",
-        height: "100%",
-        playerVars: { start, autoplay: 1, playsinline: 1, rel: 0, iv_load_policy: 3 },
-        events: {
-          onReady: () => {
-            attachEmbed(player);
-            player.setPlaybackRate?.(getState().settings.rate);
-            player.playVideo();
+    const playerVars: Record<string, string | number> = {
+      start,
+      autoplay: 1,
+      playsinline: 1,
+      rel: 0,
+      iv_load_policy: 3,
+      ...(/^https?:$/.test(window.location.protocol) ? { origin: window.location.origin } : {}),
+    };
+    loadYouTubeApi()
+      .then((YT) => {
+        if (cancelled || !host.current) return;
+        const mount = document.createElement("div");
+        host.current.replaceChildren(mount);
+        player = new YT.Player(mount, {
+          host: "https://www.youtube-nocookie.com",
+          videoId: video.id,
+          width: "100%",
+          height: "100%",
+          playerVars,
+          events: {
+            onReady: () => {
+              if (cancelled || errored) return;
+              attachEmbed(player);
+              player.setPlaybackRate?.(getState().settings.rate);
+              player.playVideo();
+            },
+            onStateChange: (e: { data: number }) => {
+              if (cancelled || errored) return;
+              embedStateChanged(e.data);
+            },
+            onError: (e: { data: number }) => {
+              if (cancelled) return;
+              errored = true;
+              clearInterval(timer);
+              embedFailed();
+              setEmbedErr(describeEmbedError(e.data));
+            },
           },
-          onStateChange: (e: { data: number }) => embedStateChanged(e.data),
-        },
+        });
+        timer = setInterval(embedTick, 500);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        errored = true;
+        embedFailed();
+        setEmbedErr(describeEmbedError(-1));
       });
-      timer = setInterval(embedTick, 500);
-    });
     return () => {
       cancelled = true;
       clearInterval(timer);
@@ -276,5 +350,32 @@ function Watch({ video }: { video: Video }) {
       player?.destroy?.();
     };
   }, [video.id]);
-  return <div className="embed" ref={host} />;
+
+  return (
+    <div className="embed">
+      <div className="embed-host" ref={host} />
+      {embedErr && (
+        <div className="embed-fallback" role="status">
+          <div className="t">{embedErr.title}</div>
+          <div className="s">{embedErr.body}</div>
+          <div className="actions">
+            <button className="pill primary" onClick={() => setMode("listen", false)}>
+              <Icon name="headphones" size={16} />
+              Listen in Audio
+            </button>
+            <button
+              className="pill"
+              onClick={() => {
+                const t = Math.floor(getPlayer().time);
+                openExternalUrl(`https://www.youtube.com/watch?v=${video.id}${t > 0 ? `&t=${t}s` : ""}`);
+              }}
+            >
+              <Icon name="external" size={15} />
+              Open in YouTube
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

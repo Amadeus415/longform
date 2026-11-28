@@ -1,6 +1,6 @@
-import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
-import { consumeNativeAuthCode, createNativeAuthCode, upsertUser, type UserRole } from "./db.ts";
+import { consumeNativeAuthCode, createNativeAuthCode, getUserById, isDbReady, upsertUser, type UserRole } from "./db.ts";
 
 const COOKIE_NAME = "longform_session";
 const OAUTH_COOKIE = "longform_oauth";
@@ -17,6 +17,7 @@ const attempts = new Map<string, AttemptBucket>();
 export type SessionInfo = {
   uid: string;
   exp: number;
+  tv?: number;
   email?: string;
   name?: string;
   role?: UserRole;
@@ -25,6 +26,7 @@ export type SessionInfo = {
 type MediaTokenInfo = {
   uid: string;
   exp: number;
+  tv?: number;
   email?: string;
 };
 
@@ -85,13 +87,32 @@ export function verifyPassword(candidate: string, expected = process.env.APP_PAS
   return timingSafeEqual(sha256(candidate), sha256(cleanExpected));
 }
 
+let warnedMissingSessionSecret = false;
+const derivedPasswordKeys = new Map<string, Buffer>();
+
 function signingKey(purpose: string): Buffer {
-  const secret =
-    process.env.SESSION_SECRET?.trim() ||
-    process.env.GOOGLE_CLIENT_SECRET?.trim() ||
-    process.env.APP_PASSWORD?.trim() ||
-    "";
-  return createHash("sha256").update(`longform:${purpose}:v1:${secret}`, "utf8").digest();
+  const strongSecret = process.env.SESSION_SECRET?.trim() || process.env.GOOGLE_CLIENT_SECRET?.trim() || "";
+  if (strongSecret) {
+    return createHash("sha256").update(`longform:${purpose}:v1:${strongSecret}`, "utf8").digest();
+  }
+  const pw = process.env.APP_PASSWORD?.trim() || "";
+  if (pw) {
+    if (process.env.NODE_ENV === "production" && !warnedMissingSessionSecret) {
+      warnedMissingSessionSecret = true;
+      console.warn(
+        "[auth] WARNING: SESSION_SECRET is unset; stretching APP_PASSWORD with scrypt. Set a random 32-byte SESSION_SECRET in production.",
+      );
+    }
+    const cacheKey = `${purpose}:${pw}`;
+    let key = derivedPasswordKeys.get(cacheKey);
+    if (!key) {
+      key = scryptSync(pw, `longform:${purpose}:scrypt:v1`, 32);
+      if (derivedPasswordKeys.size > 16) derivedPasswordKeys.clear();
+      derivedPasswordKeys.set(cacheKey, key);
+    }
+    return key;
+  }
+  return createHash("sha256").update(`longform:${purpose}:v1:`, "utf8").digest();
 }
 
 function signPayload(payload: object, purpose: string): string {
@@ -123,18 +144,28 @@ function verifyPayload<T>(token: string | undefined, purpose: string): T | null 
 export function createSessionToken(
   nowSec = Math.floor(Date.now() / 1000),
   email?: string,
-  extra?: { uid?: string; name?: string; role?: UserRole },
+  extra?: { uid?: string; name?: string; role?: UserRole; tv?: number },
 ): string {
   const cleanEmail = email?.trim().toLowerCase();
   const uid = extra?.uid || (cleanEmail ? `email:${cleanEmail}` : "owner");
+  const tv = extra?.tv ?? (isDbReady() ? getUserById(uid)?.tokenVersion ?? 1 : 1);
   const payload: SessionInfo = {
     uid,
     exp: nowSec + SESSION_TTL_SEC,
+    tv,
     ...(cleanEmail ? { email: cleanEmail } : {}),
     ...(extra?.name ? { name: extra.name } : {}),
     ...(extra?.role ? { role: extra.role } : {}),
   };
   return signPayload(payload, "session");
+}
+
+function isTokenVersionCurrent(uid: string, tokenTv: number | undefined): boolean {
+  if (!isDbReady()) return true;
+  const user = getUserById(uid);
+  if (!user) return true;
+  // Tokens minted before revocation have tv=1 (or omitted); any bump (tv >= 2) immediately invalidates older tokens!
+  return (tokenTv ?? 1) === user.tokenVersion;
 }
 
 export function readSessionToken(token: string | undefined, nowSec = Math.floor(Date.now() / 1000)): SessionInfo | null {
@@ -146,9 +177,11 @@ export function readSessionToken(token: string | undefined, nowSec = Math.floor(
   // If only Google auth is enabled (no password fallback), require an allowed email in the session.
   if (!isPasswordAuthEnabled() && (!payload.email || !isAllowedEmail(payload.email))) return null;
   const uid = typeof payload.uid === "string" && payload.uid ? payload.uid : payload.email ? `email:${payload.email}` : "owner";
+  if (!isTokenVersionCurrent(uid, payload.tv)) return null;
   return {
     uid,
     exp: payload.exp,
+    ...(typeof payload.tv === "number" ? { tv: payload.tv } : {}),
     ...(payload.email ? { email: payload.email } : {}),
     ...(payload.name ? { name: payload.name } : {}),
     ...(payload.role ? { role: payload.role } : {}),
@@ -160,10 +193,12 @@ export function verifySessionToken(token: string | undefined, nowSec = Math.floo
 }
 
 /** Short-lived token scoped strictly to media endpoints (/api/audio/*, /api/avatar/*, /api/news/avatar) for native <audio>/<img>. */
-export function createMediaToken(session: Pick<SessionInfo, "uid" | "email">, nowSec = Math.floor(Date.now() / 1000)): string {
+export function createMediaToken(session: Pick<SessionInfo, "uid" | "email" | "tv">, nowSec = Math.floor(Date.now() / 1000)): string {
+  const tv = session.tv ?? (isDbReady() ? getUserById(session.uid)?.tokenVersion ?? 1 : 1);
   const payload: MediaTokenInfo = {
     uid: session.uid,
     exp: nowSec + MEDIA_TOKEN_TTL_SEC,
+    tv,
     ...(session.email ? { email: session.email } : {}),
   };
   return signPayload(payload, "media");
@@ -175,6 +210,7 @@ export function readMediaToken(token: string | undefined, nowSec = Math.floor(Da
   if (!payload || typeof payload.exp !== "number" || payload.exp <= nowSec || !payload.uid) return null;
   if (payload.email && isGoogleAuthEnabled() && !isAllowedEmail(payload.email)) return null;
   if (!isPasswordAuthEnabled() && (!payload.email || !isAllowedEmail(payload.email))) return null;
+  if (!isTokenVersionCurrent(payload.uid, payload.tv)) return null;
   return payload;
 }
 
@@ -236,7 +272,7 @@ function cookieString(c: Context, name: string, value: string, maxAgeSec: number
   ].join("; ");
 }
 
-export function setSessionCookie(c: Context, email?: string, extra?: { uid?: string; name?: string; role?: UserRole }): string {
+export function setSessionCookie(c: Context, email?: string, extra?: { uid?: string; name?: string; role?: UserRole; tv?: number }): string {
   const token = createSessionToken(Math.floor(Date.now() / 1000), email, extra);
   c.header("Set-Cookie", cookieString(c, COOKIE_NAME, token, SESSION_TTL_SEC), { append: true });
   return token;
@@ -248,7 +284,7 @@ export function clearSessionCookie(c: Context): void {
 
 // ---------- Google OAuth 2.0 + PKCE (Web + Native Mobile) ----------
 
-type OAuthState = { state: string; verifier: string; client: "web" | "native"; exp: number };
+type OAuthState = { state: string; verifier: string; client: "web" | "native"; nativeChallenge?: string; exp: number };
 
 export function oauthCallbackUrl(c: Context): string {
   const explicit = process.env.PUBLIC_URL?.trim().replace(/\/+$/, "");
@@ -267,11 +303,20 @@ function authErrorRedirect(c: Context, code: string, client: "web" | "native"): 
 export function startGoogleAuth(c: Context): Response {
   const client: "web" | "native" = c.req.query("client") === "native" ? "native" : "web";
   if (!isGoogleAuthEnabled()) return authErrorRedirect(c, "unavailable", client);
+  const rawChallenge = c.req.query("code_challenge")?.trim();
+  const nativeChallenge =
+    client === "native" && rawChallenge && /^[A-Za-z0-9_-]{32,128}$/.test(rawChallenge) ? rawChallenge : undefined;
   const state = randomBytes(24).toString("base64url");
   const verifier = randomBytes(32).toString("base64url");
   const challenge = createHash("sha256").update(verifier).digest("base64url");
   const oauthToken = signPayload(
-    { state, verifier, client, exp: Math.floor(Date.now() / 1000) + OAUTH_TTL_SEC } satisfies OAuthState,
+    {
+      state,
+      verifier,
+      client,
+      ...(nativeChallenge ? { nativeChallenge } : {}),
+      exp: Math.floor(Date.now() / 1000) + OAUTH_TTL_SEC,
+    } satisfies OAuthState,
     "oauth",
   );
 
@@ -362,17 +407,25 @@ export async function finishGoogleAuth(c: Context): Promise<Response> {
     const uid = stored?.id ?? fallbackId;
 
     if (client === "native") {
-      const exchangeCode = createNativeAuthCode({
-        id: uid,
-        email,
-        name: stored?.name ?? profile.name ?? null,
-        role: stored?.role ?? role,
-      });
+      const exchangeCode = createNativeAuthCode(
+        {
+          id: uid,
+          email,
+          name: stored?.name ?? profile.name ?? null,
+          role: stored?.role ?? role,
+        },
+        saved.nativeChallenge ?? null,
+      );
       if (!exchangeCode) return authErrorRedirect(c, "failed", "native");
       return c.redirect(`${NATIVE_CALLBACK_SCHEME}?code=${encodeURIComponent(exchangeCode)}`, 302);
     }
 
-    setSessionCookie(c, email, { uid, name: stored?.name ?? profile.name, role: stored?.role ?? role });
+    setSessionCookie(c, email, {
+      uid,
+      name: stored?.name ?? profile.name,
+      role: stored?.role ?? role,
+      tv: stored?.tokenVersion ?? 1,
+    });
     return c.redirect("/", 302);
   } catch (error) {
     console.error(`[auth] Google callback error: ${(error as Error).message}`);
@@ -386,16 +439,27 @@ export async function exchangeNativeAuthCode(c: Context): Promise<Response> {
   const code = typeof body?.code === "string" ? body.code.trim() : "";
   const claimed = consumeNativeAuthCode(code);
   if (!claimed) return c.json({ error: "Sign-in code expired or invalid." }, 401);
+  if (claimed.codeChallenge) {
+    const verifier = typeof body?.codeVerifier === "string" ? body.codeVerifier.trim() : "";
+    const computed = verifier ? createHash("sha256").update(verifier).digest("base64url") : "";
+    const a = Buffer.from(computed, "utf8");
+    const b = Buffer.from(claimed.codeChallenge, "utf8");
+    if (!verifier || a.length !== b.length || !timingSafeEqual(a, b)) {
+      return c.json({ error: "PKCE code verifier mismatch." }, 401);
+    }
+  }
   if (claimed.email && isGoogleAuthEnabled() && !isAllowedEmail(claimed.email)) {
     return c.json({ error: "This account is no longer authorized." }, 403);
   }
   const nowSec = Math.floor(Date.now() / 1000);
+  const tv = getUserById(claimed.userId)?.tokenVersion ?? 1;
   const token = createSessionToken(nowSec, claimed.email ?? undefined, {
     uid: claimed.userId,
     name: claimed.name ?? undefined,
     role: claimed.role,
+    tv,
   });
-  const mediaToken = createMediaToken({ uid: claimed.userId, email: claimed.email ?? undefined }, nowSec);
+  const mediaToken = createMediaToken({ uid: claimed.userId, email: claimed.email ?? undefined, tv }, nowSec);
   return c.json({
     ok: true,
     token,
@@ -409,12 +473,50 @@ export async function exchangeNativeAuthCode(c: Context): Promise<Response> {
   });
 }
 
-// ---------- Password login rate limit ----------
+// ---------- Proxy-safe client IP extraction & password login rate limit ----------
+
+function trustProxyMode(): "true" | "cloudflare" | "false" {
+  const mode = process.env.TRUST_PROXY?.trim().toLowerCase();
+  if (mode === "true") return "true";
+  if (mode === "cloudflare") return "cloudflare";
+  return "false";
+}
+
+export function extractClientIp(c: Context): string {
+  // Only trust platform-specific edge headers when running on that verified platform
+  // (prevents Fly-Client-IP / CF-Connecting-IP spoofing on Railway, VPS, or bare Node).
+  if (process.env.FLY_APP_NAME?.trim()) {
+    const flyIp = c.req.header("fly-client-ip")?.trim();
+    if (flyIp) return flyIp;
+  }
+  if (trustProxyMode() === "cloudflare") {
+    const cfIp = c.req.header("cf-connecting-ip")?.trim();
+    if (cfIp) return cfIp;
+  }
+  if (process.env.VERCEL) {
+    const vercelIp = c.req.header("x-vercel-forwarded-for")?.split(",").pop()?.trim();
+    if (vercelIp) return vercelIp;
+  }
+
+  // Only trust generic X-Forwarded-For / X-Real-IP when TRUST_PROXY=true (and use the rightmost proxy-appended IP,
+  // never the spoofable leftmost client-supplied header value).
+  if (trustProxyMode() === "true") {
+    const forwarded = c.req.header("x-forwarded-for");
+    if (forwarded) {
+      const hops = forwarded.split(",").map((s) => s.trim()).filter(Boolean);
+      if (hops.length) return hops[hops.length - 1];
+    }
+    const realIp = c.req.header("x-real-ip")?.trim();
+    if (realIp) return realIp;
+  }
+
+  // Fallback to direct socket remoteAddress if exposed by @hono/node-server, else local.
+  const incoming = (c.env as { incoming?: { socket?: { remoteAddress?: string } } } | undefined)?.incoming;
+  return incoming?.socket?.remoteAddress || "local";
+}
 
 function clientIp(c: Context): string {
-  const forwarded = c.req.header("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return c.req.header("x-real-ip") ?? "local";
+  return extractClientIp(c);
 }
 
 export function checkLoginRateLimit(key: string, now = Date.now()): { ok: true } | { ok: false; retryAfterSec: number } {
@@ -462,7 +564,7 @@ export const securityHeaders: MiddlewareHandler = async (c, next) => {
   await next();
   c.header("X-Content-Type-Options", "nosniff");
   c.header("X-Frame-Options", "DENY");
-  c.header("Referrer-Policy", "no-referrer");
+  c.header("Referrer-Policy", "strict-origin-when-cross-origin");
   c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   // Never let a shared CDN cache authenticated private API responses.
   if (isAuthEnabled() && c.req.path.startsWith("/api/") && !PUBLIC_API_PATHS.has(c.req.path)) {

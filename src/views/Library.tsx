@@ -1,12 +1,15 @@
 import { useMemo, useRef, useState } from "react";
+import { useDiscoverStatus } from "../lib/discover";
 import { refreshFeeds } from "../lib/feed";
 import { navigate } from "../lib/nav";
 import { isNative, openExternalUrl } from "../lib/native";
 import { refreshNews } from "../lib/newsFeed";
 import { play } from "../lib/player";
-import { dayKey, exportData, importData, updateSettings, useStore } from "../lib/store";
+import { summarizeRatings } from "../lib/ratings";
+import { currentRules, dayKey, exportData, importData, updateSettings, useStore } from "../lib/store";
 import { pullAndSync, useSyncStatus } from "../lib/sync";
 import { toVideo } from "../lib/useFeed";
+import { RatingsInsightsSheet } from "./Rating";
 import { Avatar, Frame, Icon, NewsAvatar, REPO_URL, Segmented, Toggle, ago, span, toast } from "./ui";
 
 export function Library({
@@ -30,6 +33,12 @@ export function Library({
   const channels = useStore((s) => s.channels);
   const newsSources = useStore((s) => s.newsSources);
   const progress = useStore((s) => s.progress);
+  const ratings = useStore((s) => s.ratings);
+  const ratingsSummary = useMemo(() => summarizeRatings(ratings), [ratings]);
+  const [showRatings, setShowRatings] = useState(false);
+  const history = useStore((s) => s.history);
+  const rules = currentRules({ history } as never);
+  const discoverStatus = useDiscoverStatus();
   const sync = useSyncStatus();
   const backup = useRef<HTMLInputElement>(null);
   const recent = useMemo(() => Object.values(progress).sort((a, b) => b.at - a.at).slice(0, 12), [progress]);
@@ -89,6 +98,22 @@ export function Library({
             <span className="label">News sources<small>{newsSources.length ? `${newsSources.length} Bluesky, RSS & HN sources` : "Build your zero-cost daily brief"}</small></span>
             <span className="stack-avatars">
               {newsSources.slice(0, 4).map((s) => <NewsAvatar key={s.id} id={s.id} title={s.title} src={s.avatar} size={28} />)}
+            </span>
+            <span className="chev"><Icon name="right" size={18} /></span>
+          </button>
+          <button className="row with-icon" onClick={() => navigate("algorithm")}>
+            <span className="lead"><Icon name="algorithm" /></span>
+            <span className="label">
+              Filter & AI Judge
+              <small>
+                {rules.minMinutes ? `≥${rules.minMinutes}m` : "Any length"} ·{" "}
+                {rules.llm.enabled
+                  ? discoverStatus.judgeAvailable === false
+                    ? "Gemini key needed"
+                    : `AI ≥ ${rules.llm.minScore}/10`
+                  : "AI judge off"}
+                {rules.discoverEnabled ? ` · ${discoverStatus.hasCookie ? "YouTube Home" : "Watch-Next"}` : ""}
+              </small>
             </span>
             <span className="chev"><Icon name="right" size={18} /></span>
           </button>
@@ -162,6 +187,18 @@ export function Library({
 
         <div className="section-head"><h2>Your data</h2></div>
         <div className="group">
+          <button className="row with-icon" onClick={() => setShowRatings(true)}>
+            <span className="lead"><Icon name={ratingsSummary.count ? "starFill" : "star"} /></span>
+            <span className="label">
+              Video ratings (1–10)
+              <small>
+                {ratingsSummary.count
+                  ? `${ratingsSummary.count} rated · avg ${ratingsSummary.avgScore.toFixed(1)}/10 · insights & CSV/JSON`
+                  : "Rank videos 1–10 to build feed-improvement data"}
+              </small>
+            </span>
+            <span className="chev"><Icon name="right" size={18} /></span>
+          </button>
           <button
             className="row with-icon"
             onClick={() => {
@@ -171,7 +208,7 @@ export function Library({
             }}
           >
             <span className="lead"><Icon name="upload" /></span>
-            <span className="label">Export a backup<small>Channels, news sources, rules, and progress</small></span>
+            <span className="label">Export a backup<small>Channels, ratings, news sources, rules, and progress</small></span>
           </button>
           <button className="row with-icon" onClick={() => backup.current?.click()}>
             <span className="lead"><Icon name="download" /></span>
@@ -217,6 +254,7 @@ export function Library({
           </button>
         </div>
       </div>
+      {showRatings && <RatingsInsightsSheet onClose={() => setShowRatings(false)} />}
     </div>
   );
 }

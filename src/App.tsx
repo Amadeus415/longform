@@ -8,6 +8,7 @@ import {
   onUnauthorized,
   setAuthTokens,
 } from "./lib/api";
+import { refreshDiscover, refreshDiscoverStatus } from "./lib/discover";
 import { refreshFeeds } from "./lib/feed";
 import { navigate, tabOf, useRoute } from "./lib/nav";
 import {
@@ -31,6 +32,7 @@ import { News } from "./views/News";
 import { NewsSources } from "./views/NewsSources";
 import { Onboarding } from "./views/Onboarding";
 import { MiniPlayer, PlayerSheet } from "./views/Player";
+import { RatingHost } from "./views/Rating";
 import { ActionHost, Icon, Toasts, type IconName } from "./views/ui";
 
 const TABS: { id: "feed" | "news" | "algorithm" | "library"; label: string; icon: IconName; active: IconName }[] = [
@@ -197,10 +199,11 @@ export function App() {
 
   useEffect(() => {
     if (auth.checking || !auth.authenticated || auth.needsServer) return;
-    refreshFeeds();
+    refreshDiscoverStatus().catch(() => {});
+    refreshFeeds().then(() => refreshDiscover()).catch(() => {});
     refreshNews();
     const onForeground = () => {
-      refreshFeeds();
+      refreshFeeds().then(() => refreshDiscover()).catch(() => {});
       refreshNews();
       if (auth.syncEnabled) pullAndSync().catch(() => {});
     };
@@ -317,6 +320,7 @@ export function App() {
       </nav>
       <PlayerSheet />
       <ActionHost />
+      <RatingHost />
       <Toasts />
     </div>
   );

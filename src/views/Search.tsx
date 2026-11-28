@@ -11,7 +11,7 @@ import { Avatar, Frame, Icon, Sheet, ago } from "./ui";
 export function Search({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const channels = useStore((s) => s.channels);
-  const { all, hidden } = useFeed();
+  const { all, hidden, judgments } = useFeed();
   const hiddenWhy = useMemo(() => new Map(hidden.map((h) => [h.video.id, h.reason])), [hidden]);
   const q = query.trim();
 
@@ -67,7 +67,7 @@ export function Search({ onClose }: { onClose: () => void }) {
               {hiddenWhy.has(v.id) && <span className="why"><Icon name="eyeOff" size={13} /> {hiddenWhy.get(v.id)}</span>}
             </div>
           </button>
-          <button className="icon-btn" onClick={() => openVideoActions(v)} aria-label="More actions"><Icon name="more" size={20} /></button>
+          <button className="icon-btn" onClick={() => openVideoActions(v, judgments[v.id])} aria-label="More actions"><Icon name="more" size={20} /></button>
         </div>
       ))}
 

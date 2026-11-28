@@ -16,11 +16,88 @@ import { cached, forget } from "./cache.ts";
 // - The URL rejects the HTTP Range header; the byte range has to go in a "range" query parameter.
 
 const run = promisify(execFile);
-const YTDLP = process.env.YTDLP_PATH || "yt-dlp";
 const VIDEO_ID = /^[\w-]{11}$/;
 // googlevideo throttles large range requests, so fetch upstream in chunks no bigger than this.
 const CHUNK = 8 * 1024 * 1024;
 const COOKIES_TMP = "/tmp/longform-yt-cookies.txt";
+const MAX_ACTIVE_RELAYS = 40;
+
+function ytdlpBin(): string {
+  return process.env.YTDLP_PATH || "yt-dlp";
+}
+
+function maxYtdlpConcurrent(): number {
+  const n = Number(process.env.YTDLP_MAX_CONCURRENT);
+  return Number.isFinite(n) && n >= 1 ? Math.round(n) : 4;
+}
+
+function maxYtdlpQueue(): number {
+  const n = Number(process.env.YTDLP_MAX_QUEUE);
+  return Number.isFinite(n) && n >= 1 ? Math.round(n) : 16;
+}
+
+export class AudioBusyError extends Error {
+  constructor(message = "Audio resolver busy; please retry shortly") {
+    super(message);
+    this.name = "AudioBusyError";
+  }
+}
+
+type YtdlpWaiter = { wake: () => void; cancel: (err: Error) => void; timer: ReturnType<typeof setTimeout> };
+let ytdlpInflight = 0;
+const ytdlpWaiters: YtdlpWaiter[] = [];
+let activeRelays = 0;
+
+async function withYtdlpSlot<T>(fn: () => Promise<T>, waitMs = 15_000): Promise<T> {
+  const max = maxYtdlpConcurrent();
+  if (ytdlpInflight < max) {
+    ytdlpInflight++;
+  } else {
+    if (ytdlpWaiters.length >= maxYtdlpQueue()) {
+      throw new AudioBusyError();
+    }
+    await new Promise<void>((resolve, reject) => {
+      const waiter: YtdlpWaiter = {
+        wake: () => {
+          clearTimeout(waiter.timer);
+          resolve();
+        },
+        cancel: (err) => {
+          clearTimeout(waiter.timer);
+          reject(err);
+        },
+        timer: setTimeout(() => {
+          const idx = ytdlpWaiters.indexOf(waiter);
+          if (idx !== -1) ytdlpWaiters.splice(idx, 1);
+          reject(new AudioBusyError("Audio resolver wait timed out"));
+        }, waitMs),
+      };
+      waiter.timer.unref?.();
+      ytdlpWaiters.push(waiter);
+    });
+  }
+  try {
+    return await fn();
+  } finally {
+    if (ytdlpWaiters.length > 0 && ytdlpInflight <= maxYtdlpConcurrent()) {
+      ytdlpWaiters.shift()?.wake();
+    } else {
+      ytdlpInflight = Math.max(0, ytdlpInflight - 1);
+    }
+  }
+}
+
+export function resetAudioLimitsForTests(): void {
+  ytdlpInflight = 0;
+  activeRelays = 0;
+  while (ytdlpWaiters.length > 0) {
+    const w = ytdlpWaiters.shift();
+    if (w) {
+      clearTimeout(w.timer);
+      w.cancel(new AudioBusyError("Reset"));
+    }
+  }
+}
 
 type Stream = { url: string; size: number; type: string };
 
@@ -60,7 +137,9 @@ function ytdlpArgs(id: string): string[] {
 
 function resolve(id: string): Promise<Stream> {
   return cached(`audio:${id}`, 4 * 60 * 60_000, async () => {
-    const { stdout } = await run(YTDLP, ytdlpArgs(id), { maxBuffer: 64 * 1024 * 1024, timeout: 60_000 });
+    const { stdout } = await withYtdlpSlot(() =>
+      run(ytdlpBin(), ytdlpArgs(id), { maxBuffer: 16 * 1024 * 1024, timeout: 45_000 }),
+    );
     const info = JSON.parse(stdout);
     const url: string = info.url;
     const size = Number(info.filesize ?? new URL(url).searchParams.get("clen"));
@@ -69,19 +148,27 @@ function resolve(id: string): Promise<Stream> {
     if (wait > 0) await new Promise((done) => setTimeout(done, wait + 300));
     const types: Record<string, string> = { m4a: "audio/mp4", mp4: "audio/mp4", webm: "audio/webm", mp3: "audio/mpeg", ogg: "audio/ogg" };
     return { url, size, type: types[info.ext] ?? "application/octet-stream" };
-  });
+  }, { namespace: "audio", staleOnError: false, negativeTtlMs: 15_000 });
 }
 
-/** Start resolving a stream ahead of time, so pressing play is instant. */
+/** Start resolving a stream ahead of time, skipping silently if the yt-dlp pool is already busy. */
 export function warmAudio(id: string): void {
-  if (VIDEO_ID.test(id)) resolve(id).catch(() => {});
+  if (!VIDEO_ID.test(id)) return;
+  if (ytdlpInflight >= maxYtdlpConcurrent() && ytdlpWaiters.length >= Math.floor(maxYtdlpQueue() / 2)) return;
+  resolve(id).catch(() => {});
 }
 
 export async function audioResponse(request: Request, id: string): Promise<Response> {
   if (!VIDEO_ID.test(id)) return new Response("Bad video id", { status: 400 });
+  if (activeRelays >= MAX_ACTIVE_RELAYS) {
+    return new Response("Audio relay busy; try again shortly", { status: 503, headers: { "Retry-After": "5" } });
+  }
   try {
     return await respond(request, id);
   } catch (error) {
+    if (error instanceof AudioBusyError) {
+      return new Response("Audio resolver busy; try again shortly", { status: 503, headers: { "Retry-After": "5" } });
+    }
     if (!request.signal.aborted) {
       const missing = (error as NodeJS.ErrnoException).code === "ENOENT";
       console.error(`[audio] ${id}: ${missing ? "yt-dlp is not installed (brew install yt-dlp)" : (error as Error).message.split("\n")[0]}`);
@@ -162,6 +249,13 @@ function relay(
 ): ReadableStream<Uint8Array> {
   let reader = first.body!.getReader();
   let next = Math.min(end, start + CHUNK - 1) + 1;
+  let released = false;
+  activeRelays++;
+  const release = () => {
+    if (released) return;
+    released = true;
+    activeRelays = Math.max(0, activeRelays - 1);
+  };
   return new ReadableStream({
     async pull(controller) {
       try {
@@ -169,7 +263,10 @@ function relay(
           const { done, value } = await reader.read();
           if (value) return controller.enqueue(value);
           if (!done) continue;
-          if (next > end) return controller.close();
+          if (next > end) {
+            release();
+            return controller.close();
+          }
           const chunkEnd = Math.min(end, next + CHUNK - 1);
           let response = await fetchChunk(url, next, chunkEnd, signal);
           if (expired(response)) {
@@ -182,10 +279,12 @@ function relay(
           next = Math.min(end, next + CHUNK - 1) + 1;
         }
       } catch (error) {
+        release();
         controller.error(error);
       }
     },
     cancel() {
+      release();
       reader.cancel().catch(() => {});
     },
   });

@@ -36,7 +36,7 @@ describe("multi-user state sync API", () => {
     expect(emptyRes.status).toBe(200);
     expect(await emptyRes.json()).toEqual({ state: null, updatedAt: 0, revision: 0 });
 
-    // Alice saves her channels & news sources.
+    // Alice saves her channels, ratings & news sources.
     const putAlice = await app.request("/api/me/state", {
       method: "PUT",
       headers: { Authorization: `Bearer ${aliceToken}`, "Content-Type": "application/json" },
@@ -46,6 +46,28 @@ describe("multi-user state sync API", () => {
           newsSources: [{ id: "hn:front_page", kind: "hn", title: "Hacker News" }],
           history: [],
           progress: {},
+          ratings: {
+            vidGood0001: {
+              videoId: "vidGood0001",
+              score: 9,
+              ratedAt: 1700000000000,
+              title: "Deep dive on compilers",
+              channel: "OpenAI",
+              channelId: "UCXZCJLdBC09xxGZ6gcdrc6A",
+              seconds: 1800,
+              aiScore: 8,
+              note: "Super clear walkthrough",
+            },
+            vidBadScore: {
+              videoId: "vidBadScore",
+              score: 99,
+              ratedAt: 1700000000000,
+              title: "Invalid score",
+              channel: "Bad",
+              channelId: "UC1111111111111111111111",
+              seconds: 600,
+            },
+          },
           settings: { theme: "dark" },
           listened: { "2026-11-25": 1200 },
           newsHistory: [],
@@ -56,13 +78,19 @@ describe("multi-user state sync API", () => {
     expect(putAlice.status).toBe(200);
     expect(await putAlice.json()).toMatchObject({ ok: true, revision: 1 });
 
-    // Alice reads back her sanitized state (invalid channel ID dropped).
+    // Alice reads back her sanitized state (invalid channel ID and out-of-range rating dropped).
     const getAlice = await app.request("/api/me/state", { headers: { Authorization: `Bearer ${aliceToken}` } });
     const aliceData = (await getAlice.json()) as { state: SyncedState; revision: number };
     expect(aliceData.revision).toBe(1);
     expect(aliceData.state.channels).toEqual([{ id: "UCXZCJLdBC09xxGZ6gcdrc6A", title: "OpenAI" }]);
     expect(aliceData.state.newsSources).toEqual([{ id: "hn:front_page", kind: "hn", title: "Hacker News" }]);
     expect(aliceData.state.listened).toEqual({ "2026-11-25": 1200 });
+    expect(Object.keys(aliceData.state.ratings)).toEqual(["vidGood0001"]);
+    expect(aliceData.state.ratings.vidGood0001).toMatchObject({
+      score: 9,
+      aiScore: 8,
+      note: "Super clear walkthrough",
+    });
 
     // Bob is completely isolated from Alice's data.
     const getBob = await app.request("/api/me/state", { headers: { Authorization: `Bearer ${bobToken}` } });
@@ -75,6 +103,7 @@ describe("mergeSyncedState", () => {
     const baseSettings = { mode: "listen" as const, frames: true, theme: "auto" as const, rate: 1, continueOnLock: true };
     const local: SyncedState = {
       channels: [{ id: "UC1111111111111111111111", title: "Local Channel" }],
+      blockedChannels: [{ id: "UC9999999999999999999999", title: "Slop Channel" }],
       history: [{ v: 1, at: 100, rules: DEFAULT_RULES, changes: ["Default rules"] }],
       progress: {
         vid1: {
@@ -82,6 +111,17 @@ describe("mergeSyncedState", () => {
           d: 1800,
           at: 5000,
           video: { id: "vid1", title: "Ep 1", channel: "A", channelId: "UC1111111111111111111111", seconds: 1800, published: "2026-11-20" },
+        },
+      },
+      ratings: {
+        vid1: {
+          videoId: "vid1",
+          score: 9,
+          ratedAt: 6000,
+          title: "Ep 1",
+          channel: "A",
+          channelId: "UC1111111111111111111111",
+          seconds: 1800,
         },
       },
       settings: baseSettings,
@@ -93,6 +133,7 @@ describe("mergeSyncedState", () => {
 
     const remote: SyncedState = {
       channels: [{ id: "UC2222222222222222222222", title: "Remote Channel" }],
+      blockedChannels: [],
       history: [
         { v: 1, at: 100, rules: DEFAULT_RULES, changes: ["Default rules"] },
         { v: 2, at: 2000, rules: { ...DEFAULT_RULES, minMinutes: 30 }, changes: ["Minimum length → 30 min"] },
@@ -103,6 +144,26 @@ describe("mergeSyncedState", () => {
           d: 1800,
           at: 2000,
           video: { id: "vid1", title: "Ep 1", channel: "A", channelId: "UC1111111111111111111111", seconds: 1800, published: "2026-11-20" },
+        },
+      },
+      ratings: {
+        vid1: {
+          videoId: "vid1",
+          score: 5,
+          ratedAt: 3000,
+          title: "Ep 1",
+          channel: "A",
+          channelId: "UC1111111111111111111111",
+          seconds: 1800,
+        },
+        vid2: {
+          videoId: "vid2",
+          score: 8,
+          ratedAt: 4000,
+          title: "Ep 2",
+          channel: "B",
+          channelId: "UC2222222222222222222222",
+          seconds: 2400,
         },
       },
       settings: { ...baseSettings, theme: "dark" },
@@ -116,6 +177,8 @@ describe("mergeSyncedState", () => {
     expect(merged.channels.map((c) => c.id)).toEqual(["UC2222222222222222222222", "UC1111111111111111111111"]);
     expect(merged.newsSources.map((s) => s.id)).toEqual(["bsky:reuters.com", "hn:front_page"]);
     expect(merged.progress.vid1.t).toBe(900); // local had newer timestamp
+    expect(merged.ratings.vid1.score).toBe(9); // local rating had newer timestamp
+    expect(merged.ratings.vid2.score).toBe(8); // remote-only rating preserved
     expect(merged.listened).toEqual({ "2026-11-25": 900, "2026-11-24": 1800 });
     expect(merged.history).toHaveLength(2); // remote had real edits
     expect(merged.newsRead).toEqual({ b: 2000, a: 1000 });

@@ -111,6 +111,7 @@ describe("auth & session tokens", () => {
     });
     expect(statusAfter.headers.get("x-content-type-options")).toBe("nosniff");
     expect(statusAfter.headers.get("x-frame-options")).toBe("DENY");
+    expect(statusAfter.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
 
     // Native Bearer token also authenticates cleanly.
     const bearerStatus = await app.request("/api/auth/status", {
