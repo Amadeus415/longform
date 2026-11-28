@@ -1,0 +1,3002 @@
+[
+  {
+    "id": "bm000000001",
+    "title": "But what is a Fourier Transform? A visual introduction",
+    "channel": "3Blue1Brown",
+    "channelId": "UC0000000000000000000002",
+    "seconds": 480,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000002",
+    "title": "Quantum Tunneling Explained in 8 Minutes",
+    "channel": "PBS Space Time",
+    "channelId": "UC0000000000000000000003",
+    "seconds": 495,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000003",
+    "title": "How Modern CPUs Execute Out of Order",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000004",
+    "seconds": 720,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000004",
+    "title": "Why Do Prime Numbers Follow Patterns?",
+    "channel": "Numberphile",
+    "channelId": "UC0000000000000000000005",
+    "seconds": 610,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000005",
+    "title": "How B-Trees Power Every SQL Database",
+    "channel": "Hussein Nasser",
+    "channelId": "UC0000000000000000000006",
+    "seconds": 890,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000006",
+    "title": "The Mathematics of Public Key Cryptography",
+    "channel": "3Blue1Brown",
+    "channelId": "UC0000000000000000000007",
+    "seconds": 780,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000007",
+    "title": "How mRNA Vaccines Actually Instruct Ribosomes",
+    "channel": "Kurzgesagt",
+    "channelId": "UC0000000000000000000008",
+    "seconds": 640,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000008",
+    "title": "Why Bridges Collapse: Resonance and Aeroelastic Flutter",
+    "channel": "Practical Engineering",
+    "channelId": "UC0000000000000000000009",
+    "seconds": 810,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000009",
+    "title": "How DNS Resolution Works Step by Step",
+    "channel": "ByteByteGo",
+    "channelId": "UC0000000000000000000010",
+    "seconds": 410,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000010",
+    "title": "Why Semiconductor Lithography Uses Extreme UV Light",
+    "channel": "Asianometry",
+    "channelId": "UC0000000000000000000011",
+    "seconds": 980,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000011",
+    "title": "How Li-Ion Batteries Degrade Over Time",
+    "channel": "Engineering Explained",
+    "channelId": "UC0000000000000000000012",
+    "seconds": 750,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000012",
+    "title": "The Economic History of the Gold Standard",
+    "channel": "Economics Explained",
+    "channelId": "UC0000000000000000000013",
+    "seconds": 870,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000013",
+    "title": "How Consensus Works in Raft Distributed Systems",
+    "channel": "Systems Design Lab",
+    "channelId": "UC0000000000000000000014",
+    "seconds": 690,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000014",
+    "title": "Why Concrete Gets Stronger Underwater",
+    "channel": "Practical Engineering",
+    "channelId": "UC0000000000000000000015",
+    "seconds": 620,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000015",
+    "title": "How CRISPR-Cas9 Edits DNA Sequences",
+    "channel": "MIT Biology",
+    "channelId": "UC0000000000000000000016",
+    "seconds": 540,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000016",
+    "title": "How Jet Engines Stay Cool Above Melting Temperatures",
+    "channel": "Real Engineering",
+    "channelId": "UC0000000000000000000017",
+    "seconds": 930,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000017",
+    "title": "Understanding Attention Mechanisms in Transformers",
+    "channel": "Andrej Karpathy",
+    "channelId": "UC0000000000000000000018",
+    "seconds": 1020,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000018",
+    "title": "How Garbage Collectors Track Reachable Memory",
+    "channel": "Core Dumped",
+    "channelId": "UC0000000000000000000019",
+    "seconds": 840,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000019",
+    "title": "Why Ocean Currents Regulate European Climate",
+    "channel": "Atlas Pro",
+    "channelId": "UC0000000000000000000020",
+    "seconds": 760,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000020",
+    "title": "How GPS Satellites Correct for General Relativity",
+    "channel": "Veritasium",
+    "channelId": "UC0000000000000000000021",
+    "seconds": 680,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000021",
+    "title": "The Physics of Nuclear Fusion Tokamaks",
+    "channel": "Sabine Hossenfelder",
+    "channelId": "UC0000000000000000000022",
+    "seconds": 820,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000022",
+    "title": "How Git Stores Commits as a Merkle Tree",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000023",
+    "seconds": 590,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000023",
+    "title": "Why Supply Chains Experience the Bullwhip Effect",
+    "channel": "Wendover Productions",
+    "channelId": "UC0000000000000000000024",
+    "seconds": 910,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000024",
+    "title": "How Compilers Optimize Loops with SSA Form",
+    "channel": "LLVM Talks",
+    "channelId": "UC0000000000000000000025",
+    "seconds": 1040,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000025",
+    "title": "The Geometry of Non-Euclidean Hyperbolic Space",
+    "channel": "Mathologer",
+    "channelId": "UC0000000000000000000026",
+    "seconds": 890,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000026",
+    "title": "How Central Banks Set Interest Rates",
+    "channel": "Plain Bagel",
+    "channelId": "UC0000000000000000000027",
+    "seconds": 670,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000027",
+    "title": "Why Submarines Use Pump-Jet Propulsors",
+    "channel": "Sub Brief",
+    "channelId": "UC0000000000000000000028",
+    "seconds": 730,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000028",
+    "title": "How HTTPS Handshakes Establish Forward Secrecy",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000029",
+    "seconds": 660,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000029",
+    "title": "The Roman Concrete Formula Rediscovered",
+    "channel": "Toldinstone",
+    "channelId": "UC0000000000000000000030",
+    "seconds": 590,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000030",
+    "title": "How Neural Radiance Fields Reconstruct 3D Scenes",
+    "channel": "Two Minute Papers",
+    "channelId": "UC0000000000000000000031",
+    "seconds": 420,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000031",
+    "title": "Why Aeroplane Wings Have Winglets",
+    "channel": "Mentour Pilot",
+    "channelId": "UC0000000000000000000032",
+    "seconds": 780,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000032",
+    "title": "How PostgreSQL MVCC Handles Concurrent Transactions",
+    "channel": "CMU Database Group",
+    "channelId": "UC0000000000000000000033",
+    "seconds": 950,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000033",
+    "title": "The Biology of Circadian Rhythms and Melatonin",
+    "channel": "Stanford Medicine",
+    "channelId": "UC0000000000000000000034",
+    "seconds": 810,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000034",
+    "title": "How Fiber Optic Cables Transmit Terabits Across Oceans",
+    "channel": "Branch Education",
+    "channelId": "UC0000000000000000000035",
+    "seconds": 1050,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000035",
+    "title": "Why Inflation Differs Across Housing and Goods",
+    "channel": "Ben Felix",
+    "channelId": "UC0000000000000000000036",
+    "seconds": 740,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000036",
+    "title": "How Linux Virtual Memory Maps Process Pages",
+    "channel": "Core Dumped",
+    "channelId": "UC0000000000000000000037",
+    "seconds": 920,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000037",
+    "title": "The History of the Bronze Age Collapse",
+    "channel": "Fall of Civilizations",
+    "channelId": "UC0000000000000000000038",
+    "seconds": 1080,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000038",
+    "title": "How Electric Motors Convert Magnetic Flux to Torque",
+    "channel": "Lesics",
+    "channelId": "UC0000000000000000000039",
+    "seconds": 610,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000039",
+    "title": "Why Antibiotic Resistance Evolves So Rapidly",
+    "channel": "Journey to the Microcosmos",
+    "channelId": "UC0000000000000000000040",
+    "seconds": 580,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000040",
+    "title": "How Hash Tables Resolve Collisions in Constant Time",
+    "channel": "CS Dojo",
+    "channelId": "UC0000000000000000000041",
+    "seconds": 510,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000041",
+    "title": "How Rocket Nozzles Accelerate Exhaust Past Mach 1",
+    "channel": "Everyday Astronaut",
+    "channelId": "UC0000000000000000000042",
+    "seconds": 990,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000042",
+    "title": "Why Index Funds Outperform Most Active Managers",
+    "channel": "Ben Felix",
+    "channelId": "UC0000000000000000000043",
+    "seconds": 690,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000043",
+    "title": "How Floating Point Rounding Errors Happen in IEEE 754",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000044",
+    "seconds": 560,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000044",
+    "title": "The Engineering Behind Undersea Power Interconnectors",
+    "channel": "Real Engineering",
+    "channelId": "UC0000000000000000000045",
+    "seconds": 880,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000045",
+    "title": "How Plate Tectonics Formed the Himalayas",
+    "channel": "GeologyHub",
+    "channelId": "UC0000000000000000000046",
+    "seconds": 630,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000046",
+    "title": "Why Rust Ownership Eliminates Data Races at Compile Time",
+    "channel": "No Boilerplate",
+    "channelId": "UC0000000000000000000047",
+    "seconds": 710,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000047",
+    "title": "How Zero-Knowledge Proofs Verify Without Revealing",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000048",
+    "seconds": 830,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000048",
+    "title": "The History of the Dutch East India Company",
+    "channel": "Kings and Generals",
+    "channelId": "UC0000000000000000000049",
+    "seconds": 960,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000049",
+    "title": "How Solar Photovoltaics Convert Photons to Current",
+    "channel": "Physics Girl",
+    "channelId": "UC0000000000000000000050",
+    "seconds": 520,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000050",
+    "title": "How TCP Congestion Control Prevents Network Collapse",
+    "channel": "Ben Eater",
+    "channelId": "UC0000000000000000000051",
+    "seconds": 860,
+    "label": "educational",
+    "archetype": "concise_explainer"
+  },
+  {
+    "id": "bm000000051",
+    "title": "MIT 6.S191: Introduction to Deep Learning — Full Lecture 1",
+    "channel": "MIT OpenCourseWare",
+    "channelId": "UC0000000000000000000052",
+    "seconds": 3420,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000052",
+    "title": "Stanford CS229: Machine Learning — Linear Regression & Gradient Descent",
+    "channel": "Stanford Online",
+    "channelId": "UC0000000000000000000053",
+    "seconds": 4680,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000053",
+    "title": "The Complete History of TSMC and Global Semiconductors",
+    "channel": "Acquired",
+    "channelId": "UC0000000000000000000054",
+    "seconds": 11400,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000054",
+    "title": "Building GPT from Scratch in Code",
+    "channel": "Andrej Karpathy",
+    "channelId": "UC0000000000000000000055",
+    "seconds": 7140,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000055",
+    "title": "Demis Hassabis on AlphaFold, Scientific Discovery, and AGI",
+    "channel": "Dwarkesh Patel",
+    "channelId": "UC0000000000000000000056",
+    "seconds": 5280,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000056",
+    "title": "The Fall of the Byzantine Empire Documentary",
+    "channel": "Fall of Civilizations",
+    "channelId": "UC0000000000000000000057",
+    "seconds": 9600,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000057",
+    "title": "Sean Carroll: Quantum Field Theory and Spacetime Emergence",
+    "channel": "Royal Institution",
+    "channelId": "UC0000000000000000000058",
+    "seconds": 3900,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000058",
+    "title": "CMU 15-445: Database Systems — Storage & Buffer Pools",
+    "channel": "CMU Database Group",
+    "channelId": "UC0000000000000000000059",
+    "seconds": 4800,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000059",
+    "title": "NVIDIA: The GPU Architecture Story (Part 1)",
+    "channel": "Acquired",
+    "channelId": "UC0000000000000000000060",
+    "seconds": 10200,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000060",
+    "title": "Harvard CS50: Data Structures and Memory Management",
+    "channel": "CS50",
+    "channelId": "UC0000000000000000000061",
+    "seconds": 6900,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000061",
+    "title": "Richard Feynman: The Character of Physical Law (Lecture 1)",
+    "channel": "Cornell Archive",
+    "channelId": "UC0000000000000000000062",
+    "seconds": 3360,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000062",
+    "title": "Terence Tao on Lean Proof Assistants and Prime Gaps",
+    "channel": "Lex Fridman",
+    "channelId": "UC0000000000000000000063",
+    "seconds": 8400,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000063",
+    "title": "How Boeing Engineered the 747 in 28 Months",
+    "channel": "Mustard",
+    "channelId": "UC0000000000000000000064",
+    "seconds": 2100,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000064",
+    "title": "The Medici Bank and Renaissance Finance",
+    "channel": "Patrick Boyle",
+    "channelId": "UC0000000000000000000065",
+    "seconds": 2460,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000065",
+    "title": "Systems Performance: Linux Kernel Profiling Deep Dive",
+    "channel": "USENIX",
+    "channelId": "UC0000000000000000000066",
+    "seconds": 3600,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000066",
+    "title": "Conversations with Tyler: Economic Growth and Innovation",
+    "channel": "Conversations with Tyler",
+    "channelId": "UC0000000000000000000067",
+    "seconds": 4200,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000067",
+    "title": "Peter Attia: Cardiovascular Physiology and ApoB Explained",
+    "channel": "Peter Attia MD",
+    "channelId": "UC0000000000000000000068",
+    "seconds": 5400,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000068",
+    "title": "The History of UNIX and Bell Labs",
+    "channel": "Computer History Museum",
+    "channelId": "UC0000000000000000000069",
+    "seconds": 4100,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000069",
+    "title": "Berkeley CS162: Operating Systems Scheduling",
+    "channel": "UC Berkeley",
+    "channelId": "UC0000000000000000000070",
+    "seconds": 4500,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000070",
+    "title": "How the Panama Canal Locks Operate Without Pumps",
+    "channel": "Practical Engineering",
+    "channelId": "UC0000000000000000000071",
+    "seconds": 1860,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000071",
+    "title": "Yale ECON 252: Financial Markets with Robert Shiller",
+    "channel": "YaleCourses",
+    "channelId": "UC0000000000000000000072",
+    "seconds": 4320,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000072",
+    "title": "Jeff Dean on Scaling Distributed Computing at Google",
+    "channel": "Latent Space",
+    "channelId": "UC0000000000000000000073",
+    "seconds": 4900,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000073",
+    "title": "The Mathematics of General Relativity — Lecture 3",
+    "channel": "Leonard Susskind",
+    "channelId": "UC0000000000000000000074",
+    "seconds": 5700,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000074",
+    "title": "How Modern Air Traffic Control Coordinates 100,000 Flights",
+    "channel": "Wendover Productions",
+    "channelId": "UC0000000000000000000075",
+    "seconds": 2280,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000075",
+    "title": "The Byzantine-Sassanid Wars: Full Documentary",
+    "channel": "Kings and Generals",
+    "channelId": "UC0000000000000000000076",
+    "seconds": 5100,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000076",
+    "title": "Designing Data-Intensive Applications: Replication & Consensus",
+    "channel": "Martin Kleppmann",
+    "channelId": "UC0000000000000000000077",
+    "seconds": 3840,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000077",
+    "title": "How TSMC Builds 3nm Transistors",
+    "channel": "Asianometry",
+    "channelId": "UC0000000000000000000078",
+    "seconds": 2340,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000078",
+    "title": "The Science of Sleep Architecture and Memory Consolidation",
+    "channel": "Andrew Huberman",
+    "channelId": "UC0000000000000000000079",
+    "seconds": 6300,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000079",
+    "title": "Stanford CS149: Parallel Computing and GPU Kernels",
+    "channel": "Stanford Online",
+    "channelId": "UC0000000000000000000080",
+    "seconds": 4740,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000080",
+    "title": "The History of the Federal Reserve System",
+    "channel": "Economics Explained",
+    "channelId": "UC0000000000000000000081",
+    "seconds": 2700,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000081",
+    "title": "How Apollo Guidance Computer Software Survived the 1202 Alarm",
+    "channel": "CuriousMarc",
+    "channelId": "UC0000000000000000000082",
+    "seconds": 2520,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000082",
+    "title": "Costco Business Strategy Breakdown",
+    "channel": "Acquired",
+    "channelId": "UC0000000000000000000083",
+    "seconds": 9900,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000083",
+    "title": "Distributed Consensus: Paxos Made Moderately Complex",
+    "channel": "MIT Distributed Systems",
+    "channelId": "UC0000000000000000000084",
+    "seconds": 4440,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000084",
+    "title": "The Physics of Black Hole Thermodynamics",
+    "channel": "PBS Space Time",
+    "channelId": "UC0000000000000000000085",
+    "seconds": 1920,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000085",
+    "title": "John Carmack on Low-Level Optimization and Software Craft",
+    "channel": "Lex Fridman",
+    "channelId": "UC0000000000000000000086",
+    "seconds": 14400,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000086",
+    "title": "How Nuclear Reactors Control Neutron Flux",
+    "channel": "Illinois EnergyProf",
+    "channelId": "UC0000000000000000000087",
+    "seconds": 2640,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000087",
+    "title": "The Industrial Revolution: Steam, Coal, and Metallurgy",
+    "channel": "History Time",
+    "channelId": "UC0000000000000000000088",
+    "seconds": 4860,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000088",
+    "title": "Modern Portfolio Theory and Factor Investing",
+    "channel": "Ben Felix",
+    "channelId": "UC0000000000000000000089",
+    "seconds": 1980,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000089",
+    "title": "How Compilers Generate Machine Code for ARM64",
+    "channel": "CppCon",
+    "channelId": "UC0000000000000000000090",
+    "seconds": 3720,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000090",
+    "title": "The Geology of Yellowstone Supervolcano",
+    "channel": "USGS Science",
+    "channelId": "UC0000000000000000000091",
+    "seconds": 2940,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000091",
+    "title": "How Global Submarine Cable Repair Ships Work",
+    "channel": "Real Engineering",
+    "channelId": "UC0000000000000000000092",
+    "seconds": 1740,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000092",
+    "title": "MIT 18.06: Eigenvalues and Eigenvectors — Gilbert Strang",
+    "channel": "MIT OpenCourseWare",
+    "channelId": "UC0000000000000000000093",
+    "seconds": 3060,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000093",
+    "title": "The History of Cryptanalysis at Bletchley Park",
+    "channel": "Royal Institution",
+    "channelId": "UC0000000000000000000094",
+    "seconds": 3540,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000094",
+    "title": "Postgres Internals: Write-Ahead Logging and Crash Recovery",
+    "channel": "PostgresConf",
+    "channelId": "UC0000000000000000000095",
+    "seconds": 3180,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000095",
+    "title": "How High-Voltage DC Transmission Connects Continents",
+    "channel": "Engineering with Rosie",
+    "channelId": "UC0000000000000000000096",
+    "seconds": 1800,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000096",
+    "title": "The Origins of Writing in Mesopotamia",
+    "channel": "Irving Finkel Lecture",
+    "channelId": "UC0000000000000000000097",
+    "seconds": 3960,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000097",
+    "title": "Scaling SQLite for Production Web Applications",
+    "channel": "Systems Conf",
+    "channelId": "UC0000000000000000000098",
+    "seconds": 2820,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000098",
+    "title": "How Modern Vaccines Are Manufactured at Global Scale",
+    "channel": "Veritasium",
+    "channelId": "UC0000000000000000000099",
+    "seconds": 1680,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000099",
+    "title": "The Economics of Semiconductor Foundries",
+    "channel": "Odd Lots Podcast",
+    "channelId": "UC0000000000000000000100",
+    "seconds": 3240,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000100",
+    "title": "Linear Algebra Done Right: Inner Product Spaces",
+    "channel": "Sheldon Axler",
+    "channelId": "UC0000000000000000000101",
+    "seconds": 3480,
+    "label": "educational",
+    "archetype": "long_form_educational"
+  },
+  {
+    "id": "bm000000101",
+    "title": "How your body reacts to extreme cold",
+    "channel": "Stanford Physiology",
+    "channelId": "UC0000000000000000000102",
+    "seconds": 840,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000102",
+    "title": "How compilation works in Rust",
+    "channel": "Systems Lab",
+    "channelId": "UC0000000000000000000103",
+    "seconds": 1140,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000103",
+    "title": "How TikTok's recommendation algorithm works",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000104",
+    "seconds": 920,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000104",
+    "title": "ASMR and the science of tingles",
+    "channel": "Neuroscience Explained",
+    "channelId": "UC0000000000000000000105",
+    "seconds": 780,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000105",
+    "title": "Unboxing the James Webb mirror design",
+    "channel": "NASA Engineering",
+    "channelId": "UC0000000000000000000106",
+    "seconds": 1020,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000106",
+    "title": "The prank that fooled Victorian London",
+    "channel": "History Archive",
+    "channelId": "UC0000000000000000000107",
+    "seconds": 1360,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000107",
+    "title": "Chemical Reaction Kinetics: Arrhenius Equation Lecture",
+    "channel": "MIT OpenCourseWare",
+    "channelId": "UC0000000000000000000108",
+    "seconds": 3120,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000108",
+    "title": "Key Highlights from the Federal Reserve Policy Report",
+    "channel": "Financial Times",
+    "channelId": "UC0000000000000000000109",
+    "seconds": 840,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000109",
+    "title": "How Video Compression Clips High-Frequency Signals",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000110",
+    "seconds": 690,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000110",
+    "title": "The Trailer Hitch Physics of Towing Stability",
+    "channel": "Engineering Explained",
+    "channelId": "UC0000000000000000000111",
+    "seconds": 540,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000111",
+    "title": "Immune System Reaction to Novel Pathogens",
+    "channel": "Stanford Medicine",
+    "channelId": "UC0000000000000000000112",
+    "seconds": 1920,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000112",
+    "title": "Research Highlights in Room-Temperature Superconductors",
+    "channel": "Quanta Magazine",
+    "channelId": "UC0000000000000000000113",
+    "seconds": 780,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000113",
+    "title": "Paper Clip Economics: Trade, Specialization, and Supply",
+    "channel": "Marginal Revolution",
+    "channelId": "UC0000000000000000000114",
+    "seconds": 620,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000114",
+    "title": "How Memes Spread: Network Topology & Epidemics",
+    "channel": "Complexity Explorer",
+    "channelId": "UC0000000000000000000115",
+    "seconds": 1450,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000115",
+    "title": "Live Surgery Lecture: Microvascular Anastomosis",
+    "channel": "Johns Hopkins Med",
+    "channelId": "UC0000000000000000000116",
+    "seconds": 2100,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000116",
+    "title": "Endothermic vs Exothermic Reaction Thermodynamics",
+    "channel": "Khan Academy",
+    "channelId": "UC0000000000000000000117",
+    "seconds": 660,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000117",
+    "title": "Audio Clipping and Dynamic Range in Digital Signal Processing",
+    "channel": "Tech Ingredients",
+    "channelId": "UC0000000000000000000118",
+    "seconds": 920,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000118",
+    "title": "Historical Drama and Political Rhetoric in Ancient Athens",
+    "channel": "YaleCourses",
+    "channelId": "UC0000000000000000000119",
+    "seconds": 2940,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000119",
+    "title": "Highlights of the 2026 Fusion Ignition Breakthrough",
+    "channel": "Lawrence Livermore",
+    "channelId": "UC0000000000000000000120",
+    "seconds": 810,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000120",
+    "title": "Gameplay Loops as Finite State Machines in C++",
+    "channel": "GDC Talks",
+    "channelId": "UC0000000000000000000121",
+    "seconds": 2520,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000121",
+    "title": "Catalytic Reaction Mechanisms in Industrial Ammonia Synthesis",
+    "channel": "Chemical Engineering",
+    "channelId": "UC0000000000000000000122",
+    "seconds": 1140,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000122",
+    "title": "The Selfish Gene and Meme Propagation Models",
+    "channel": "Santa Fe Institute",
+    "channelId": "UC0000000000000000000123",
+    "seconds": 3300,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000123",
+    "title": "Why Boat Trailers Fishtail: Center of Gravity Physics",
+    "channel": "Veritasium",
+    "channelId": "UC0000000000000000000124",
+    "seconds": 760,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000124",
+    "title": "Live Coding a Rust HTTP/2 Server from Scratch",
+    "channel": "Jon Gjengset",
+    "channelId": "UC0000000000000000000125",
+    "seconds": 6400,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000125",
+    "title": "Allergic Reaction Pathways: IgE and Mast Cells",
+    "channel": "Osmosis",
+    "channelId": "UC0000000000000000000126",
+    "seconds": 580,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000126",
+    "title": "Quarterly Economic Highlights: Productivity and Labor Data",
+    "channel": "Brookings",
+    "channelId": "UC0000000000000000000127",
+    "seconds": 1860,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000127",
+    "title": "Clipping Planes and Frustum Culling in 3D Graphics",
+    "channel": "Acerola",
+    "channelId": "UC0000000000000000000128",
+    "seconds": 1080,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000128",
+    "title": "Belousov-Zhabotinsky Oscillating Chemical Reaction",
+    "channel": "NileRed",
+    "channelId": "UC0000000000000000000129",
+    "seconds": 890,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000129",
+    "title": "The Evolution of Documentary Trailers in Film History",
+    "channel": "Every Frame a Painting",
+    "channelId": "UC0000000000000000000130",
+    "seconds": 740,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000130",
+    "title": "Live Telescope Observation: Jupiter Galilean Moons",
+    "channel": "Astronomy Cast",
+    "channelId": "UC0000000000000000000131",
+    "seconds": 1980,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000131",
+    "title": "Reaction-Diffusion Systems and Alan Turing Patterns",
+    "channel": "Numberphile",
+    "channelId": "UC0000000000000000000132",
+    "seconds": 960,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000132",
+    "title": "Highlights of the Cassini Mission to Saturn",
+    "channel": "JPL NASA",
+    "channelId": "UC0000000000000000000133",
+    "seconds": 1540,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000133",
+    "title": "Binder Clip Mechanics: Spring Steel Stress Analysis",
+    "channel": "Practical Engineering",
+    "channelId": "UC0000000000000000000134",
+    "seconds": 630,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000134",
+    "title": "Redox Reaction Balancing in Electrochemistry",
+    "channel": "Organic Chemistry Tutor",
+    "channelId": "UC0000000000000000000135",
+    "seconds": 1120,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000135",
+    "title": "How Procedural Gameplay Generation Uses Wave Function Collapse",
+    "channel": "Martin Donald",
+    "channelId": "UC0000000000000000000136",
+    "seconds": 1260,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000136",
+    "title": "Live Panel: Constitutional Law and Administrative Agencies",
+    "channel": "Harvard Law",
+    "channelId": "UC0000000000000000000137",
+    "seconds": 3720,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000137",
+    "title": "Polymerization Reaction Engineering for Aerospace Composites",
+    "channel": "MIT Materials",
+    "channelId": "UC0000000000000000000138",
+    "seconds": 2640,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000138",
+    "title": "Highlights from the IPCC Climate Assessment Report",
+    "channel": "Carbon Brief",
+    "channelId": "UC0000000000000000000139",
+    "seconds": 1380,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000139",
+    "title": "Sutherland-Hodgman Polygon Clipping Algorithm Explained",
+    "channel": "Computer Graphics Lab",
+    "channelId": "UC0000000000000000000140",
+    "seconds": 820,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000140",
+    "title": "Fusion Reaction Cross-Sections at Stellar Temperatures",
+    "channel": "PBS Space Time",
+    "channelId": "UC0000000000000000000141",
+    "seconds": 1020,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000141",
+    "title": "Cultural Memes in Medieval Manuscript Marginalia",
+    "channel": "Medieval History",
+    "channelId": "UC0000000000000000000142",
+    "seconds": 1440,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000142",
+    "title": "Trailer Aerodynamics: How Drag Reduction Saves Freight Fuel",
+    "channel": "Real Engineering",
+    "channelId": "UC0000000000000000000143",
+    "seconds": 860,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000143",
+    "title": "Stress Reaction in Structural Steel Under Cyclic Load",
+    "channel": "Efficient Engineer",
+    "channelId": "UC0000000000000000000144",
+    "seconds": 790,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000144",
+    "title": "Conference Highlights: New Algorithms in Graph Theory",
+    "channel": "Simons Institute",
+    "channelId": "UC0000000000000000000145",
+    "seconds": 2160,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000145",
+    "title": "How Signal Clipping Causes Harmonic Distortion",
+    "channel": "Ben Eater",
+    "channelId": "UC0000000000000000000146",
+    "seconds": 710,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000146",
+    "title": "Nuclear Fission vs Fusion Reaction Energy Yields",
+    "channel": "Illinois EnergyProf",
+    "channelId": "UC0000000000000000000147",
+    "seconds": 1620,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000147",
+    "title": "Live Q&A with Nobel Laureate on Quantum Entanglement",
+    "channel": "Royal Institution",
+    "channelId": "UC0000000000000000000148",
+    "seconds": 3480,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000148",
+    "title": "Maillard Reaction Chemistry in Food Science",
+    "channel": "Adam Ragusea",
+    "channelId": "UC0000000000000000000149",
+    "seconds": 840,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000149",
+    "title": "Highlights of Modern Cryptography: Post-Quantum Lattices",
+    "channel": "IACR Lectures",
+    "channelId": "UC0000000000000000000150",
+    "seconds": 2760,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000150",
+    "title": "Action-Reaction Pairs and Rocket Propulsion Momentum",
+    "channel": "Walter Lewin",
+    "channelId": "UC0000000000000000000151",
+    "seconds": 2820,
+    "label": "educational",
+    "archetype": "tricky_educational"
+  },
+  {
+    "id": "bm000000151",
+    "title": "Quick hack you need #shorts 1",
+    "channel": "ShortClips1",
+    "channelId": "UC0000000000000000000152",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000152",
+    "title": "Crazy 45 second life tip 2",
+    "channel": "ShortClips2",
+    "channelId": "UC0000000000000000000153",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000153",
+    "title": "Wait till the end!! #shorts 3",
+    "channel": "ShortClips3",
+    "channelId": "UC0000000000000000000154",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000154",
+    "title": "Quick hack you need #shorts 4",
+    "channel": "ShortClips4",
+    "channelId": "UC0000000000000000000155",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000155",
+    "title": "Crazy 45 second life tip 5",
+    "channel": "ShortClips5",
+    "channelId": "UC0000000000000000000156",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000156",
+    "title": "Wait till the end!! #shorts 6",
+    "channel": "ShortClips6",
+    "channelId": "UC0000000000000000000157",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000157",
+    "title": "Quick hack you need #shorts 7",
+    "channel": "ShortClips7",
+    "channelId": "UC0000000000000000000158",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000158",
+    "title": "Crazy 45 second life tip 8",
+    "channel": "ShortClips8",
+    "channelId": "UC0000000000000000000159",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000159",
+    "title": "Wait till the end!! #shorts 9",
+    "channel": "ShortClips9",
+    "channelId": "UC0000000000000000000160",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000160",
+    "title": "Quick hack you need #shorts 10",
+    "channel": "ShortClips10",
+    "channelId": "UC0000000000000000000161",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000161",
+    "title": "Crazy 45 second life tip 11",
+    "channel": "ShortClips11",
+    "channelId": "UC0000000000000000000162",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000162",
+    "title": "Wait till the end!! #shorts 12",
+    "channel": "ShortClips12",
+    "channelId": "UC0000000000000000000163",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000163",
+    "title": "Quick hack you need #shorts 13",
+    "channel": "ShortClips13",
+    "channelId": "UC0000000000000000000164",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000164",
+    "title": "Crazy 45 second life tip 14",
+    "channel": "ShortClips14",
+    "channelId": "UC0000000000000000000165",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000165",
+    "title": "Wait till the end!! #shorts 15",
+    "channel": "ShortClips15",
+    "channelId": "UC0000000000000000000166",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000166",
+    "title": "Quick hack you need #shorts 16",
+    "channel": "ShortClips16",
+    "channelId": "UC0000000000000000000167",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000167",
+    "title": "Crazy 45 second life tip 17",
+    "channel": "ShortClips17",
+    "channelId": "UC0000000000000000000168",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000168",
+    "title": "Wait till the end!! #shorts 18",
+    "channel": "ShortClips18",
+    "channelId": "UC0000000000000000000169",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000169",
+    "title": "Quick hack you need #shorts 19",
+    "channel": "ShortClips19",
+    "channelId": "UC0000000000000000000170",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000170",
+    "title": "Crazy 45 second life tip 20",
+    "channel": "ShortClips20",
+    "channelId": "UC0000000000000000000171",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000171",
+    "title": "Wait till the end!! #shorts 21",
+    "channel": "ShortClips21",
+    "channelId": "UC0000000000000000000172",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000172",
+    "title": "Quick hack you need #shorts 22",
+    "channel": "ShortClips22",
+    "channelId": "UC0000000000000000000173",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000173",
+    "title": "Crazy 45 second life tip 23",
+    "channel": "ShortClips23",
+    "channelId": "UC0000000000000000000174",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000174",
+    "title": "Wait till the end!! #shorts 24",
+    "channel": "ShortClips24",
+    "channelId": "UC0000000000000000000175",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000175",
+    "title": "Quick hack you need #shorts 25",
+    "channel": "ShortClips25",
+    "channelId": "UC0000000000000000000176",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000176",
+    "title": "Crazy 45 second life tip 26",
+    "channel": "ShortClips26",
+    "channelId": "UC0000000000000000000177",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000177",
+    "title": "Wait till the end!! #shorts 27",
+    "channel": "ShortClips27",
+    "channelId": "UC0000000000000000000178",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000178",
+    "title": "Quick hack you need #shorts 28",
+    "channel": "ShortClips28",
+    "channelId": "UC0000000000000000000179",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000179",
+    "title": "Crazy 45 second life tip 29",
+    "channel": "ShortClips29",
+    "channelId": "UC0000000000000000000180",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000180",
+    "title": "Wait till the end!! #shorts 30",
+    "channel": "ShortClips30",
+    "channelId": "UC0000000000000000000181",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000181",
+    "title": "Quick hack you need #shorts 31",
+    "channel": "ShortClips31",
+    "channelId": "UC0000000000000000000182",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000182",
+    "title": "Crazy 45 second life tip 32",
+    "channel": "ShortClips32",
+    "channelId": "UC0000000000000000000183",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000183",
+    "title": "Wait till the end!! #shorts 33",
+    "channel": "ShortClips33",
+    "channelId": "UC0000000000000000000184",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000184",
+    "title": "Quick hack you need #shorts 34",
+    "channel": "ShortClips34",
+    "channelId": "UC0000000000000000000185",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000185",
+    "title": "Crazy 45 second life tip 35",
+    "channel": "ShortClips35",
+    "channelId": "UC0000000000000000000186",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000186",
+    "title": "Wait till the end!! #shorts 36",
+    "channel": "ShortClips36",
+    "channelId": "UC0000000000000000000187",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000187",
+    "title": "Quick hack you need #shorts 37",
+    "channel": "ShortClips37",
+    "channelId": "UC0000000000000000000188",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000188",
+    "title": "Crazy 45 second life tip 38",
+    "channel": "ShortClips38",
+    "channelId": "UC0000000000000000000189",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000189",
+    "title": "Wait till the end!! #shorts 39",
+    "channel": "ShortClips39",
+    "channelId": "UC0000000000000000000190",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000190",
+    "title": "Quick hack you need #shorts 40",
+    "channel": "ShortClips40",
+    "channelId": "UC0000000000000000000191",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000191",
+    "title": "Crazy 45 second life tip 41",
+    "channel": "ShortClips41",
+    "channelId": "UC0000000000000000000192",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000192",
+    "title": "Wait till the end!! #shorts 42",
+    "channel": "ShortClips42",
+    "channelId": "UC0000000000000000000193",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000193",
+    "title": "Quick hack you need #shorts 43",
+    "channel": "ShortClips43",
+    "channelId": "UC0000000000000000000194",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000194",
+    "title": "Crazy 45 second life tip 44",
+    "channel": "ShortClips44",
+    "channelId": "UC0000000000000000000195",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000195",
+    "title": "Wait till the end!! #shorts 45",
+    "channel": "ShortClips45",
+    "channelId": "UC0000000000000000000196",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000196",
+    "title": "Quick hack you need #shorts 46",
+    "channel": "ShortClips46",
+    "channelId": "UC0000000000000000000197",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000197",
+    "title": "Crazy 45 second life tip 47",
+    "channel": "ShortClips47",
+    "channelId": "UC0000000000000000000198",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000198",
+    "title": "Wait till the end!! #shorts 48",
+    "channel": "ShortClips48",
+    "channelId": "UC0000000000000000000199",
+    "seconds": 110,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000199",
+    "title": "Quick hack you need #shorts 49",
+    "channel": "ShortClips49",
+    "channelId": "UC0000000000000000000200",
+    "seconds": 42,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000200",
+    "title": "Crazy 45 second life tip 50",
+    "channel": "ShortClips50",
+    "channelId": "UC0000000000000000000201",
+    "seconds": 58,
+    "label": "short_slop",
+    "archetype": "shorts_and_micro"
+  },
+  {
+    "id": "bm000000201",
+    "title": "Streamer reacts to wildest fails of the week",
+    "channel": "SlopHub202",
+    "channelId": "UC0000000000000000000202",
+    "seconds": 780,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000202",
+    "title": "INSANE prank on my roommate gone wrong!",
+    "channel": "SlopHub203",
+    "channelId": "UC0000000000000000000203",
+    "seconds": 870,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000203",
+    "title": "Ultimate TikTok cringe compilation 2026",
+    "channel": "SlopHub204",
+    "channelId": "UC0000000000000000000204",
+    "seconds": 960,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000204",
+    "title": "Spicy ramen mukbang eating challenge",
+    "channel": "SlopHub205",
+    "channelId": "UC0000000000000000000205",
+    "seconds": 1050,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000205",
+    "title": "Try not to laugh challenge with friends",
+    "channel": "SlopHub206",
+    "channelId": "UC0000000000000000000206",
+    "seconds": 1140,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000206",
+    "title": "ASMR tapping and whispering for 30 minutes",
+    "channel": "SlopHub207",
+    "channelId": "UC0000000000000000000207",
+    "seconds": 1230,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000207",
+    "title": "Mystery box unboxing worth $10,000",
+    "channel": "SlopHub208",
+    "channelId": "UC0000000000000000000208",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000208",
+    "title": "My honest reaction video to celebrity breakup",
+    "channel": "SlopHub209",
+    "channelId": "UC0000000000000000000209",
+    "seconds": 1410,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000209",
+    "title": "Pranks in the mall gone wrong!!",
+    "channel": "SlopHub210",
+    "channelId": "UC0000000000000000000210",
+    "seconds": 600,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000210",
+    "title": "Drama Alert: YouTuber feud explodes overnight",
+    "channel": "SlopHub211",
+    "channelId": "UC0000000000000000000211",
+    "seconds": 690,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000211",
+    "title": "Best TikTok dances compilation part 42",
+    "channel": "SlopHub212",
+    "channelId": "UC0000000000000000000212",
+    "seconds": 780,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000212",
+    "title": "Giant seafood mukbang with extra cheese",
+    "channel": "SlopHub213",
+    "channelId": "UC0000000000000000000213",
+    "seconds": 870,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000213",
+    "title": "Streamer reacts to crazy Karen arguments",
+    "channel": "SlopHub214",
+    "channelId": "UC0000000000000000000214",
+    "seconds": 960,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000214",
+    "title": "Try not to laugh: funny cat compilation",
+    "channel": "SlopHub215",
+    "channelId": "UC0000000000000000000215",
+    "seconds": 1050,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000215",
+    "title": "Gold digger prank gone wrong in public",
+    "channel": "SlopHub216",
+    "channelId": "UC0000000000000000000216",
+    "seconds": 1140,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000216",
+    "title": "Luxury watch unboxing haul from Dubai",
+    "channel": "SlopHub217",
+    "channelId": "UC0000000000000000000217",
+    "seconds": 1230,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000217",
+    "title": "ASMR eating crunchy honeycomb sounds",
+    "channel": "SlopHub218",
+    "channelId": "UC0000000000000000000218",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000218",
+    "title": "Reaction video to leaked influencer texts",
+    "channel": "SlopHub219",
+    "channelId": "UC0000000000000000000219",
+    "seconds": 1410,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000219",
+    "title": "Wildest frat pranks compilation ever",
+    "channel": "SlopHub220",
+    "channelId": "UC0000000000000000000220",
+    "seconds": 600,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000220",
+    "title": "TikTok trends tested until it went gone wrong",
+    "channel": "SlopHub221",
+    "channelId": "UC0000000000000000000221",
+    "seconds": 690,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000221",
+    "title": "20,000 calorie burger mukbang challenge",
+    "channel": "SlopHub222",
+    "channelId": "UC0000000000000000000222",
+    "seconds": 780,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000222",
+    "title": "Influencer reacts to ex-boyfriend diss track",
+    "channel": "SlopHub223",
+    "channelId": "UC0000000000000000000223",
+    "seconds": 870,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000223",
+    "title": "Try not to laugh impossible edition",
+    "channel": "SlopHub224",
+    "channelId": "UC0000000000000000000224",
+    "seconds": 960,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000224",
+    "title": "ASMR roleplay haircut and tingles",
+    "channel": "SlopHub225",
+    "channelId": "UC0000000000000000000225",
+    "seconds": 1050,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000225",
+    "title": "Unboxing 50 returned Amazon pallets!",
+    "channel": "SlopHub226",
+    "channelId": "UC0000000000000000000226",
+    "seconds": 1140,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000226",
+    "title": "Fake proposal prank on stranger gone wrong",
+    "channel": "SlopHub227",
+    "channelId": "UC0000000000000000000227",
+    "seconds": 1230,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000227",
+    "title": "Drama Alert: streamer banned after rant",
+    "channel": "SlopHub228",
+    "channelId": "UC0000000000000000000228",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000228",
+    "title": "Instant karma compilation 2026",
+    "channel": "SlopHub229",
+    "channelId": "UC0000000000000000000229",
+    "seconds": 1410,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000229",
+    "title": "TikTok food hacks tested by teens",
+    "channel": "SlopHub230",
+    "channelId": "UC0000000000000000000230",
+    "seconds": 600,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000230",
+    "title": "Extreme spicy wing mukbang gone wrong",
+    "channel": "SlopHub231",
+    "channelId": "UC0000000000000000000231",
+    "seconds": 690,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000231",
+    "title": "Celebrity reacts to mean tweets again",
+    "channel": "SlopHub232",
+    "channelId": "UC0000000000000000000232",
+    "seconds": 780,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000232",
+    "title": "Try not to laugh water spit challenge",
+    "channel": "SlopHub233",
+    "channelId": "UC0000000000000000000233",
+    "seconds": 870,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000233",
+    "title": "ASMR keyboard typing and rain triggers",
+    "channel": "SlopHub234",
+    "channelId": "UC0000000000000000000234",
+    "seconds": 960,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000234",
+    "title": "Huge sneaker unboxing and closet tour",
+    "channel": "SlopHub235",
+    "channelId": "UC0000000000000000000235",
+    "seconds": 1050,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000235",
+    "title": "Scary clown prank in elevator gone wrong",
+    "channel": "SlopHub236",
+    "channelId": "UC0000000000000000000236",
+    "seconds": 1140,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000236",
+    "title": "Reaction video to viral reality TV fight",
+    "channel": "SlopHub237",
+    "channelId": "UC0000000000000000000237",
+    "seconds": 1230,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000237",
+    "title": "Funny fails compilation you cannot miss",
+    "channel": "SlopHub238",
+    "channelId": "UC0000000000000000000238",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000238",
+    "title": "TikTok drama explained in 5 minutes",
+    "channel": "SlopHub239",
+    "channelId": "UC0000000000000000000239",
+    "seconds": 1410,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000239",
+    "title": "Giant sushi boat mukbang with sister",
+    "channel": "SlopHub240",
+    "channelId": "UC0000000000000000000240",
+    "seconds": 600,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000240",
+    "title": "YouTuber reacts to millionaire mansion tour",
+    "channel": "SlopHub241",
+    "channelId": "UC0000000000000000000241",
+    "seconds": 690,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000241",
+    "title": "Try not to laugh meme compilation",
+    "channel": "SlopHub242",
+    "channelId": "UC0000000000000000000242",
+    "seconds": 780,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000242",
+    "title": "ASMR slime squishing and crinkling",
+    "channel": "SlopHub243",
+    "channelId": "UC0000000000000000000243",
+    "seconds": 870,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000243",
+    "title": "Mystery tech unboxing from Wish",
+    "channel": "SlopHub244",
+    "channelId": "UC0000000000000000000244",
+    "seconds": 960,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000244",
+    "title": "Water bucket prank on dad gone wrong",
+    "channel": "SlopHub245",
+    "channelId": "UC0000000000000000000245",
+    "seconds": 1050,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000245",
+    "title": "Drama Alert: podcast hosts split up",
+    "channel": "SlopHub246",
+    "channelId": "UC0000000000000000000246",
+    "seconds": 1140,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000246",
+    "title": "Best streamer rage compilation 2026",
+    "channel": "SlopHub247",
+    "channelId": "UC0000000000000000000247",
+    "seconds": 1230,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000247",
+    "title": "TikTok shopping haul unboxing",
+    "channel": "SlopHub248",
+    "channelId": "UC0000000000000000000248",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000248",
+    "title": "Late night taco mukbang and gossip",
+    "channel": "SlopHub249",
+    "channelId": "UC0000000000000000000249",
+    "seconds": 1410,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000249",
+    "title": "Pro gamer reacts to bronze lobby plays",
+    "channel": "SlopHub250",
+    "channelId": "UC0000000000000000000250",
+    "seconds": 600,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000250",
+    "title": "Pranks on siblings that went too far gone wrong",
+    "channel": "SlopHub251",
+    "channelId": "UC0000000000000000000251",
+    "seconds": 690,
+    "label": "brainrot",
+    "archetype": "unambiguous_slop"
+  },
+  {
+    "id": "bm000000251",
+    "title": "You WON'T BELIEVE what this billionaire just did!!",
+    "channel": "HypeDaily252",
+    "channelId": "UC0000000000000000000252",
+    "seconds": 720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000252",
+    "title": "MrBeast vs 100 kids in a giant maze",
+    "channel": "HypeDaily253",
+    "channelId": "UC0000000000000000000253",
+    "seconds": 820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000253",
+    "title": "Influencer EXPOSED in the biggest scandal of the year",
+    "channel": "HypeDaily254",
+    "channelId": "UC0000000000000000000254",
+    "seconds": 920,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000254",
+    "title": "I Spent 24 Hours Buried Alive in a Glass Box",
+    "channel": "HypeDaily255",
+    "channelId": "UC0000000000000000000255",
+    "seconds": 1020,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000255",
+    "title": "Last to Leave the Circle Wins $500,000",
+    "channel": "HypeDaily256",
+    "channelId": "UC0000000000000000000256",
+    "seconds": 1120,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000256",
+    "title": "THIS CHANGES EVERYTHING FOREVER!! 😱🤯",
+    "channel": "HypeDaily257",
+    "channelId": "UC0000000000000000000257",
+    "seconds": 1220,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000257",
+    "title": "Tech CEO COMPLETELY DESTROYED in Live Debate!!",
+    "channel": "HypeDaily258",
+    "channelId": "UC0000000000000000000258",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000258",
+    "title": "The SHOCKING TRUTH They Don't Want You to Know!!",
+    "channel": "HypeDaily259",
+    "channelId": "UC0000000000000000000259",
+    "seconds": 1420,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000259",
+    "title": "$1 Hotel vs $100,000 Luxury Resort!",
+    "channel": "HypeDaily260",
+    "channelId": "UC0000000000000000000260",
+    "seconds": 1520,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000260",
+    "title": "Famous Actor HUMILIATED on Red Carpet?!?",
+    "channel": "HypeDaily261",
+    "channelId": "UC0000000000000000000261",
+    "seconds": 1620,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000261",
+    "title": "Calling Out Every Fake Guru on the Internet",
+    "channel": "HypeDaily262",
+    "channelId": "UC0000000000000000000262",
+    "seconds": 1720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000262",
+    "title": "Watch Before It's Deleted: Secret Hollywood Drama",
+    "channel": "HypeDaily263",
+    "channelId": "UC0000000000000000000263",
+    "seconds": 1820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000263",
+    "title": "I Bought a $1,000,000 Abandoned Mansion (NOT CLICKBAIT)",
+    "channel": "HypeDaily264",
+    "channelId": "UC0000000000000000000264",
+    "seconds": 720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000264",
+    "title": "Streamer WENT TOO FAR and Lost Everything!!",
+    "channel": "HypeDaily265",
+    "channelId": "UC0000000000000000000265",
+    "seconds": 820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000265",
+    "title": "100% REAL Ghost Caught on Camera at 3 AM Challenge!!",
+    "channel": "HypeDaily266",
+    "channelId": "UC0000000000000000000266",
+    "seconds": 920,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000266",
+    "title": "Politician OBLITERATED in 60 Seconds!! 🔥😡",
+    "channel": "HypeDaily267",
+    "channelId": "UC0000000000000000000267",
+    "seconds": 1020,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000267",
+    "title": "Why Everyone Is CANCELLED This Week — Huge Drama",
+    "channel": "HypeDaily268",
+    "channelId": "UC0000000000000000000268",
+    "seconds": 1120,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000268",
+    "title": "I Ate Only Gold Food for 48 Hours!!",
+    "channel": "HypeDaily269",
+    "channelId": "UC0000000000000000000269",
+    "seconds": 1220,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000269",
+    "title": "$10 vs $10,000 First Class Airline Seat",
+    "channel": "HypeDaily270",
+    "channelId": "UC0000000000000000000270",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000270",
+    "title": "You Won't Believe How Rich This 19 Year Old Is!!",
+    "channel": "HypeDaily271",
+    "channelId": "UC0000000000000000000271",
+    "seconds": 1420,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000271",
+    "title": "Influencer Beef With Former Best Friend Explained",
+    "channel": "HypeDaily272",
+    "channelId": "UC0000000000000000000272",
+    "seconds": 1520,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000272",
+    "title": "Hollywood Star EXPOSED for Lying About Everything!!",
+    "channel": "HypeDaily273",
+    "channelId": "UC0000000000000000000273",
+    "seconds": 1620,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000273",
+    "title": "I Spent 100 Hours Inside a Haunted Theme Park",
+    "channel": "HypeDaily274",
+    "channelId": "UC0000000000000000000274",
+    "seconds": 1720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000274",
+    "title": "Last to Leave the Lamborghini Keeps It!",
+    "channel": "HypeDaily275",
+    "channelId": "UC0000000000000000000275",
+    "seconds": 1820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000275",
+    "title": "SHOCKING TRUTH About Your Favorite Fast Food!! 😱💀",
+    "channel": "HypeDaily276",
+    "channelId": "UC0000000000000000000276",
+    "seconds": 720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000276",
+    "title": "Podcast Host DESTROYED by Guest in Heated Fight!!",
+    "channel": "HypeDaily277",
+    "channelId": "UC0000000000000000000277",
+    "seconds": 820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000277",
+    "title": "Nobody Talks About This INSANE Celebrity Secret!!",
+    "channel": "HypeDaily278",
+    "channelId": "UC0000000000000000000278",
+    "seconds": 920,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000278",
+    "title": "YouTuber CANCELLED After Awful Apology Video",
+    "channel": "HypeDaily279",
+    "channelId": "UC0000000000000000000279",
+    "seconds": 1020,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000279",
+    "title": "I Survived 24 Hours on a Deserted Island With $1",
+    "channel": "HypeDaily280",
+    "channelId": "UC0000000000000000000280",
+    "seconds": 1120,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000280",
+    "title": "100 Millionaires vs 100 Normal People!",
+    "channel": "HypeDaily281",
+    "channelId": "UC0000000000000000000281",
+    "seconds": 1220,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000281",
+    "title": "My Honest Reaction to This Cringe Interview",
+    "channel": "HypeDaily282",
+    "channelId": "UC0000000000000000000282",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000282",
+    "title": "Crypto Bro HUMILIATED After Losing Millions!!",
+    "channel": "HypeDaily283",
+    "channelId": "UC0000000000000000000283",
+    "seconds": 1420,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000283",
+    "title": "INSANE DRAMA Between Two Gaming Teams!!",
+    "channel": "HypeDaily284",
+    "channelId": "UC0000000000000000000284",
+    "seconds": 1520,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000284",
+    "title": "Watch Before It's Deleted!! The Truth About Influencers",
+    "channel": "HypeDaily285",
+    "channelId": "UC0000000000000000000285",
+    "seconds": 1620,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000285",
+    "title": "I Paid 50 Strangers to Compete for a Private Jet",
+    "channel": "HypeDaily286",
+    "channelId": "UC0000000000000000000286",
+    "seconds": 1720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000286",
+    "title": "Billionaire WENT TOO FAR With This Stunt!! 🔥🤡",
+    "channel": "HypeDaily287",
+    "channelId": "UC0000000000000000000287",
+    "seconds": 1820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000287",
+    "title": "You Won't Believe What Happened When We Broke In (NOT CLICKBAIT)",
+    "channel": "HypeDaily288",
+    "channelId": "UC0000000000000000000288",
+    "seconds": 720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000288",
+    "title": "Pop Star EXPOSED by Former Assistant!!",
+    "channel": "HypeDaily289",
+    "channelId": "UC0000000000000000000289",
+    "seconds": 820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000289",
+    "title": "Last to Leave the Yacht Wins $250,000",
+    "channel": "HypeDaily290",
+    "channelId": "UC0000000000000000000290",
+    "seconds": 920,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000290",
+    "title": "They Don't Want You to Know This INSANE Loophole!!",
+    "channel": "HypeDaily291",
+    "channelId": "UC0000000000000000000291",
+    "seconds": 1020,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000291",
+    "title": "Famous Coach COMPLETELY OBLITERATED by Reporter!!",
+    "channel": "HypeDaily292",
+    "channelId": "UC0000000000000000000292",
+    "seconds": 1120,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000292",
+    "title": "I Spent 24 Hours Living Like a Billionaire Dog",
+    "channel": "HypeDaily293",
+    "channelId": "UC0000000000000000000293",
+    "seconds": 1220,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000293",
+    "title": "HUGE DRAMA: Why Everyone Unfollowed Him Overnight",
+    "channel": "HypeDaily294",
+    "channelId": "UC0000000000000000000294",
+    "seconds": 1320,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000294",
+    "title": "$1 Car vs $10,000,000 Supercar Race!!",
+    "channel": "HypeDaily295",
+    "channelId": "UC0000000000000000000295",
+    "seconds": 1420,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000295",
+    "title": "Influencer Calling Out Haters in Wild Rant",
+    "channel": "HypeDaily296",
+    "channelId": "UC0000000000000000000296",
+    "seconds": 1520,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000296",
+    "title": "3 AM Challenge in Abandoned Mall (100% REAL)!! 😱🚨",
+    "channel": "HypeDaily297",
+    "channelId": "UC0000000000000000000297",
+    "seconds": 1620,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000297",
+    "title": "Shocking Truth Behind the Viral Breakup!!",
+    "channel": "HypeDaily298",
+    "channelId": "UC0000000000000000000298",
+    "seconds": 1720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000298",
+    "title": "Streamer DESTROYED His Own Career in One Night!!",
+    "channel": "HypeDaily299",
+    "channelId": "UC0000000000000000000299",
+    "seconds": 1820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000299",
+    "title": "I Tested 100 Viral Scams So You Don't Have To!!",
+    "channel": "HypeDaily300",
+    "channelId": "UC0000000000000000000300",
+    "seconds": 720,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000300",
+    "title": "Celebrity Couple EXPOSED in Leaked Audio?!?",
+    "channel": "HypeDaily301",
+    "channelId": "UC0000000000000000000301",
+    "seconds": 820,
+    "label": "brainrot",
+    "archetype": "clickbait_ragebait"
+  },
+  {
+    "id": "bm000000301",
+    "title": "The Absurd Physics of the World's Roundest Object",
+    "channel": "Veritasium",
+    "channelId": "UC0000000000000000000302",
+    "seconds": 730,
+    "description": "An engineering deep dive into silicon-28 spheres and how the kilogram was redefined from Planck's constant.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000302",
+    "title": "Why Nobody Can Beat This 100-Year-Old Engine Design",
+    "channel": "Real Engineering",
+    "channelId": "UC0000000000000000000303",
+    "seconds": 1040,
+    "description": "Examining thermodynamic efficiency limits, Brayton cycles, and turbine blade metallurgy in modern aviation.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000303",
+    "title": "The Terrifying Math Behind Exponential Growth",
+    "channel": "3Blue1Brown",
+    "channelId": "UC0000000000000000000304",
+    "seconds": 560,
+    "description": "A rigorous mathematical look at logistic differential equations, doubling times, and epidemic modeling.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000304",
+    "title": "I Built a Squirrel Obstacle Course to Study Spatial Memory",
+    "channel": "Mark Rober",
+    "channelId": "UC0000000000000000000305",
+    "seconds": 1260,
+    "description": "Testing rodent biomechanics, problem-solving memory, and spring-loaded mechanical prototypes.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000305",
+    "title": "The Insane Logistics of Antarctica's Supply Chain",
+    "channel": "Wendover Productions",
+    "channelId": "UC0000000000000000000306",
+    "seconds": 1180,
+    "description": "How McMurdo Station coordinates icebreakers, LC-130 ski-equipped aircraft, and polar fuel caches.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000306",
+    "title": "Why This Tiny Island Could Crash the Global Economy",
+    "channel": "Asianometry",
+    "channelId": "UC0000000000000000000307",
+    "seconds": 980,
+    "description": "Analyzing semiconductor foundry concentration, EUV supply chains, and geopolitical chokepoints.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000307",
+    "title": "The Strange Paradox That Nearly Broke Mathematics",
+    "channel": "Veritasium",
+    "channelId": "UC0000000000000000000308",
+    "seconds": 1420,
+    "description": "Tracing Russell's paradox, Gödel's incompleteness theorems, and Alan Turing's halting problem.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000308",
+    "title": "How One Bug Almost Destroyed the Internet in 2024",
+    "channel": "Computerphile",
+    "channelId": "UC0000000000000000000309",
+    "seconds": 920,
+    "description": "A technical post-mortem of the XZ Utils backdoor, SSH authentication hooks, and supply-chain security.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000309",
+    "title": "The Crazy Story of How We Measured the Speed of Light",
+    "channel": "PBS Space Time",
+    "channelId": "UC0000000000000000000310",
+    "seconds": 840,
+    "description": "From Ole Rømer's observations of Io to Fizeau's toothed wheel and Michelson-Morley interferometry.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000310",
+    "title": "Why Ancient Ships Didn't Sink: Naval Architecture Explained",
+    "channel": "History Time",
+    "channelId": "UC0000000000000000000311",
+    "seconds": 1560,
+    "description": "Mortise-and-tenon hull construction, ballast physics, and Mediterranean maritime trade.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000311",
+    "title": "The Hidden Algorithm Running Your City's Traffic Lights",
+    "channel": "Practical Engineering",
+    "channelId": "UC0000000000000000000312",
+    "seconds": 880,
+    "description": "Inductive loop sensors, actuated signal timing, and coordinated green-wave optimization.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000312",
+    "title": "How a 1960s Math Paper Accidentally Created Modern AI",
+    "channel": "Quanta Magazine",
+    "channelId": "UC0000000000000000000313",
+    "seconds": 790,
+    "description": "Exploring backpropagation, automatic differentiation, and gradient flow across deep networks.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000313",
+    "title": "The Mind-Bending Economics of Airline Miles",
+    "channel": "Plain Bagel",
+    "channelId": "UC0000000000000000000314",
+    "seconds": 960,
+    "description": "How frequent-flyer loyalty subsidiaries became multi-billion-dollar financial engines backed by interchange fees.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000314",
+    "title": "Why Deep-Sea Fish Don't Get Crushed by 1,000 Atmospheres",
+    "channel": "Journey to the Microcosmos",
+    "channelId": "UC0000000000000000000315",
+    "seconds": 720,
+    "description": "TMAO osmolytes, piezophilic membrane lipids, and protein folding under hydrostatic pressure.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000315",
+    "title": "How One Equation Predicts Both Stock Crashes and Earthquakes",
+    "channel": "Numberphile",
+    "channelId": "UC0000000000000000000316",
+    "seconds": 810,
+    "description": "Power-law distributions, self-organized criticality, and heavy-tailed stochastic processes.",
+    "label": "educational",
+    "archetype": "hard_borderline_edu"
+  },
+  {
+    "id": "bm000000316",
+    "title": "How I Made $47,000 in 14 Days Using Secret AI Copy-Paste Bots",
+    "channel": "Passive Cash Academy",
+    "channelId": "UC0000000000000000000317",
+    "seconds": 680,
+    "description": "Drop a comment for my free webinar link and learn the 3 hidden prompts millionaires use to print money while sleeping.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000317",
+    "title": "Why Modern Men Are Failing — Heated 3v1 Podcast Meltdown",
+    "channel": "Alpha Debate Clips",
+    "channelId": "UC0000000000000000000318",
+    "seconds": 1920,
+    "description": "Things got super tense in the studio when the panel clashed over dating standards and viral social media clips.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000318",
+    "title": "The One Morning Drink Big Pharma Doesn't Want You to Know",
+    "channel": "Biohack Hustle",
+    "channelId": "UC0000000000000000000319",
+    "seconds": 540,
+    "description": "Doctors hate this simple kitchen trick that melts belly fat overnight — link to our proprietary powder below.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000319",
+    "title": "This Altcoin Is About to 100x Next Month (Urgent Chart Analysis)",
+    "channel": "Moonshot Crypto Signals",
+    "channelId": "UC0000000000000000000320",
+    "seconds": 760,
+    "description": "Smash subscribe before the whales pump this hidden gem! Join our VIP Telegram group for instant entries.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000320",
+    "title": "Why Everyone Is Quitting College in 2026 — Brutal Reality Check",
+    "channel": "Hustle Bros Pod",
+    "channelId": "UC0000000000000000000321",
+    "seconds": 1140,
+    "description": "We react to broke graduates complaining on social media and break down why buying our dropshipping course beats a degree.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000321",
+    "title": "Woke Hollywood Just Suffered Its Biggest Humiliation Yet",
+    "channel": "Culture War Daily",
+    "channelId": "UC0000000000000000000322",
+    "seconds": 890,
+    "description": "Another box-office disaster proves fans are furious — let's laugh at the angry tweets and studio panic.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000322",
+    "title": "5 Dark Psychology Tricks to Manipulate Anyone Instantly",
+    "channel": "Mindset Sigma",
+    "channelId": "UC0000000000000000000323",
+    "seconds": 620,
+    "description": "Use these forbidden body-language hacks to dominate every room and make people obsessed with you.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000323",
+    "title": "Millionaire Dropshipper Reviews Your Side Hustles — Brutal Roast",
+    "channel": "Ecom Grindset",
+    "channelId": "UC0000000000000000000324",
+    "seconds": 1080,
+    "description": "We roast subscriber Shopify stores and reveal the secret winning product making $10k a day right now.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000324",
+    "title": "The Real Reason Celebrities Are Secretly Leaving Los Angeles",
+    "channel": "Hollywood Insider Tea",
+    "channelId": "UC0000000000000000000325",
+    "seconds": 940,
+    "description": "Unverified rumors, blind items, and shocking gossip from A-list parties everyone is whispering about.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000325",
+    "title": "AI Just Killed Coding Forever — Watch This Insane Demo!",
+    "channel": "Hype Tech Daily",
+    "channelId": "UC0000000000000000000326",
+    "seconds": 490,
+    "description": "Every software engineer is officially out of a job after this 5-minute demo — you won't believe what happened next.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000326",
+    "title": "Political Pundit Completely Loses It During Fiery Cable Rant",
+    "channel": "Outrage Wire",
+    "channelId": "UC0000000000000000000327",
+    "seconds": 720,
+    "description": "Watch the viral meltdown that has both sides furious online — leave your angriest take in the comments!",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000327",
+    "title": "Why Buying a House Is a Total Scam — Rich Mindset Secrets",
+    "channel": "Flex Wealth Club",
+    "channelId": "UC0000000000000000000328",
+    "seconds": 840,
+    "description": "Broke people buy homes while I rent supercars and scale my agency — join my masterclass tonight.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000328",
+    "title": "Top 10 Scariest Unexplained TikToks Caught on Camera",
+    "channel": "Chills Countdown",
+    "channelId": "UC0000000000000000000329",
+    "seconds": 910,
+    "description": "Number 7 gave everyone goosebumps! Tell us in the comments if you think these spooky viral clips are real.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000329",
+    "title": "Rating Controversial Celebrity Outfits — Who Flopped Hardest?",
+    "channel": "Glam Drama TV",
+    "channelId": "UC0000000000000000000330",
+    "seconds": 780,
+    "description": "Spilling all the tea on this week's red-carpet disasters and the bitter feud nobody saw coming.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  },
+  {
+    "id": "bm000000330",
+    "title": "Quit Your 9-to-5 Tomorrow With This Lazy Automated YouTube Formula",
+    "channel": "CashCow Empire",
+    "channelId": "UC0000000000000000000331",
+    "seconds": 660,
+    "description": "Use AI voiceovers to spam 50 faceless channels a week and collect ad revenue with zero effort.",
+    "label": "brainrot",
+    "archetype": "hard_borderline_slop"
+  }
+]
