@@ -4,12 +4,12 @@
 
 # Longform
 
-**Your YouTube, long-form only.**
+**A calm, non-brainrot, open-source YouTube replacement.**
 
-No Shorts. No clickbait thumbnails. No infinite scroll.<br>
-Just the channels you choose, filtered by rules you can read.
+No Shorts. No clickbait thumbnails. No infinite scroll. No ragebait slot machine.<br>
+Your chosen channels plus an optional, AI-vetted daily Discover edition — with every rule transparent and under your control.
 
-[Features](#features) · [The algorithm](#the-algorithm) · [Install](#put-it-on-your-iphone) · [How it works](#how-it-works)
+[Features](#features) · [The algorithm](#the-algorithm) · [Scaling & self-hosting](#put-it-on-your-phone-always-on--native-mobile-app) · [How it works](#how-it-works)
 
 <br>
 
@@ -22,77 +22,84 @@ Just the channels you choose, filtered by rules you can read.
 
 <br>
 
-Longform is an open-source feed with the polish of a modern media app and none of the slot machine. Your algorithm is a handful of rules you can change, preview, and roll back. Podcasts keep playing with your phone locked. No account; everything lives on your device.
+Longform is an open-source, anti-addictive YouTube client you can self-host for yourself or run for thousands of users. It combines **deterministic, versioned feed rules**, a **server-cached canonical Gemini educational judge**, and **instant on-device taste personalization** from your 1–10 ratings — with zero engagement traps.
 
 Inspired by Andrej Karpathy's [HackerTube](https://hackertube.org).
 
 ## Features
 
-- **Long-form only** — Pick topics on first launch, follow channels by name, @handle, or link, or import your subscriptions. Shorts and live streams are never fetched.
-- **A feed you can finish** — A frame from the middle of each video instead of the thumbnail, chips for how much time you have, and an end: *You're all caught up.*
-- **Rules, not ranking** — Every video is shown, newest first, unless a rule hides it. No engagement signals, no ML. The whole algorithm is [`filter.ts`](src/lib/filter.ts).
-- **Every change on record** — See which videos a change adds or removes before you save. Each save is a version you can restore in one tap.
-- **Nothing hidden** — Every filtered video shows its reason, like `Shorter than 20 min (8:14)`. Tap it to play anyway.
-- **Listen or Watch** — Audio-only playback survives a locked screen, with lock-screen controls. Switch to video at any second.
-- **Made for long episodes** — Resume where you left off, chapters, 1–2× speed, −15 / +30 s skips, and a weekly listening summary.
-- **Daily News Brief (zero cost)** — A calm **News** tab alongside your videos using public Bluesky feeds, RSS/Atom feeds, and Hacker News (no API keys). Multi-source stories cluster automatically into **Key Events**, standalone essays surface as **Key Insights**, and every hidden post has an explainable rule.
-- **Web + Native Mobile, one foundation** — Works as a web app/PWA and builds directly into a native **iOS & Android app** via Capacitor (with native background audio, lock-screen controls, haptics, and Sign in with Google).
-- **Multi-user accounts & sync** — Sign in with Google to sync your channels, news sources, rules, and progress across web and mobile. Private allowlist by default (`ALLOWED_EMAILS`), with one env var (`ALLOW_PUBLIC_SIGNUP=true`) to open it to others. Export a JSON backup anytime.
+- **Long-form & concise explainers, zero Shorts** — Pulls each channel's `UULF` long-form playlist (never Shorts or livestreams). The default 3-minute floor drops micro-clips while keeping dense 4–19 min educational explainers.
+- **A genuinely finite feed** — Mid-video frames instead of clickbait thumbnails, a 30-day default freshness window, a per-channel cap (default 2 per channel), an optional daily listening budget, and a clear end: *You're all caught up.*
+- **Two-stage transparent algorithm** —
+  1. **Fast deterministic filter ($0)**: blocked channels, finished videos, duration, age, per-channel cap, and high-precision slop phrases (tuned not to kill titles like *"Nuclear chain reaction"* or *"James Webb highlights"*).
+  2. **Canonical Gemini educational judge + on-device personalization**: scores videos once on the server across depth, clickbait, ragebait, format, and overall educational value (1–10) using server-verified metadata and prompt-injection defenses. Discover **fails closed** until scored so unvetted brainrot never flashes into your feed.
+- **1–10 ratings that actually personalize (at $0 LLM cost)** — Rate any video 1–10; Bayesian channel affinity, category affinity, and AI-bias calibration adjust scores instantaneously on-device without leaking your taste into other users' shared caches.
+- **Calm Daily Discover Edition** — Optional unfollowed recommendations (Watch-Next graph by default, no login needed) refresh at most once per day (pull-to-refresh updates followed channels only), cap at 1 video per channel with topic spacing, rank by educational quality first, and blend gently (≤ 20% of the feed).
+- **Every decision audited & versioned** — Preview exact before/after diffs before saving, inspect every hidden video or AI score (and play anything anyway), and roll back to any rule version in one tap.
+- **Listen or Watch** — Background audio survives a locked screen with Media Session controls; switch to embedded video at any second.
+- **Daily News Brief (zero cost)** — Calm **News** tab from Bluesky, RSS/Atom, and Hacker News with automatic multi-source event clustering.
+- **Built for 1,000s of users (single always-on node)** — Persistent SQLite feed/catalog/judgment caches with stale-while-revalidate serving, incremental `channel_subscribers` indexing, automatic pruning, optional YouTube Data API batch duration lookups (50 videos per 1 quota unit), strict global YouTube concurrency gate + bounded queue + token bucket + 12s InnerTube timeouts + stale-on-error fallback, platform-gated per-user/IP rate limits (`TRUST_PROXY`), atomic global + per-user daily Gemini budgets (`GEMINI_DAILY_BUDGET`, `GEMINI_USER_DAILY_BUDGET`) with safety-block batch isolation, and tombstone-safe optimistic-concurrency sync with indexed `PATCH /api/me/progress`. *(Designed for one persistent Node/SQLite server on Fly.io, Railway, or a VPS; serverless hosts like Vercel use in-memory SQLite and are best for personal demos.)*
 
 ## The algorithm
 
 ```
-Hide videos shorter than [20] min        (unknown length counts as short)
-Hide videos longer than  [off] min
-Hide videos older than   [off] days
-Hide titles containing   [#shorts] [clip] [clips] [highlights] [reaction] [prank] …
-…unless the title also contains [ ]
-Hide videos I’ve finished [on]
+Stage 1 · Deterministic rules (local, $0)
+  Hide shorter than        [3 min]      (UULF long-form uploads never vanish if length lookup fails)
+  Hide longer than         [off]
+  Published within         [30 days]    (keeps the feed finite and finishable)
+  Max per channel          [2 videos]   (prevents daily shows from flooding chronological order)
+  Hide finished            [on]
+  Hide titles with         [#shorts] [reaction video] [mukbang] [try not to laugh] [drama alert] …
+  …unless they also have   [ ]
+
+Stage 2 · Canonical AI Educational Judge + On-Device Taste (optional GEMINI_API_KEY)
+  Scope                    [Discover only]  (followed channels untouched unless set to "All")
+  Minimum effective score  [6/10]           (AI canonical score + on-device rating calibration)
+  Always block brainrot    [on]
+  Fail-closed Discover     [on]             (unscored recommendations wait quietly before appearing)
+
+Stage 3 · Calm Blending
+  Daily Discover Edition   [6 picks]        (max 1/channel, ranked by quality + diversity, ≤ 20% blend)
+  Daily time budget        [off]            (optional soft pause reminder: 30m / 60m / 90m / 120m)
 ```
 
-Words match whole words, ignoring case and accents: `clip` hides “Best clip” but not “eclipse”. End a word with `*` to match its start: `react*` hides “reaction”. Rules are plain JSON, so you can also edit them as text.
-
-<div align="center">
-<br>
-<img src="docs/screenshots/algorithm-draft.png" width="200" alt="Changing a rule: the feed count updates live and a save bar shows the change">&nbsp;
-<img src="docs/screenshots/change-preview.png" width="200" alt="Preview of exactly which videos a rule change removes, and why">&nbsp;
-<img src="docs/screenshots/actions.png" width="200" alt="The actions for a video: listen, watch, mark as finished, open in YouTube, unfollow">&nbsp;
-<img src="docs/screenshots/feed-dark.png" width="200" alt="The feed in dark mode">
-<br><br>
-</div>
+Whole-word, accent-insensitive matching: `clip` hides "Best clip" but not "eclipse"; trailing `*` matches word prefixes. All rules are plain JSON and versioned (`v1`, `v2`, …).
 
 ## Put it on your phone (always-on + native mobile app)
 
-Longform runs both in the browser (PWA) and as a native **iOS / Android app** built on the exact same React + Vite foundation via Capacitor.
+Longform runs both in the browser (PWA) and as a native **iOS / Android app** via Capacitor.
 
-- **Access anywhere (laptop off):** Deploy the included `Dockerfile` to **Fly.io** (`fly.toml`) or **Railway** (`railway.toml`) with a persistent `/data` volume for SQLite sync and `yt-dlp` audio streaming. Full step-by-step guide in [`docs/DEPLOY.md`](docs/DEPLOY.md).
-- **Native iOS / Android app:**
-  ```sh
-  VITE_API_URL="https://your-longform-server.fly.dev" npm run build:mobile
-  npm run cap:ios      # opens Xcode → Run on iPhone or Archive for TestFlight
-  npm run cap:android  # opens Android Studio
-  ```
+- **Zero-key self-host (works immediately):** Followed channels, deterministic filtering, clickbait guard, News brief, and Listen/Watch playback require **zero API keys**.
+- **Full AI-vetted Discover:** Set `GEMINI_API_KEY` (defaults to `gemini-3.5-flash-lite` with `GEMINI_DAILY_BUDGET=10000` videos/day — roughly ~$0.25/day for ~1,000 users thanks to shared canonical caching; see [`.env.example`](.env.example) for sizing guidance and [`docs/EVAL_BASELINE.md`](docs/EVAL_BASELINE.md) for measured real-YouTube accuracy).
+- **Scale to 100s–1,000s of users:** Add `YOUTUBE_API_KEY` (batches 50 video durations per 1 quota unit), `SESSION_SECRET`, Google OAuth (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`), and `ALLOW_PUBLIC_SIGNUP=true`. See [`.env.example`](.env.example) and [`docs/DEPLOY.md`](docs/DEPLOY.md).
 - **Local Mac dev / home Wi-Fi:**
   ```sh
   brew install node yt-dlp
   npm install
   npm start            # → Longform server on http://localhost:8787
   ```
+- **Native iOS / Android app:**
+  ```sh
+  VITE_API_URL="https://your-longform-server.fly.dev" npm run build:mobile
+  npm run cap:ios      # opens Xcode
+  npm run cap:android  # opens Android Studio
+  ```
 
 <details>
-<summary><b>Development and Docker</b></summary>
+<summary><b>Development, Tests & Docker</b></summary>
 
 <br>
 
 ```sh
 npm run dev        # app on :5173 with hot reload, API on :8787
-npm test           # filter and chapter tests
+npm test           # deterministic filter, real-YouTube benchmark (276 videos), judge, sync & security tests
+npm run typecheck  # TypeScript strict check
 npm start          # production build on :8787 (PORT to change)
 ```
 
 ```sh
 docker build -t longform .
-docker run -p 8787:8787 longform
+docker run -p 8787:8787 -v longform-data:/data longform
 ```
 
 </details>
@@ -100,30 +107,23 @@ docker run -p 8787:8787 longform
 ## How it works
 
 ```
-Browser  ·  all your data, the filter         Server  ·  stateless, cached
-─────────────────────────────────────         ──────────────────────────────────────────
-channels, rules, history, progress     ──►    GET /api/channel/:id
-applyRules(videos, rules) → feed              └ RSS of the long-form playlist + lengths
-<audio src="/api/audio/:id">           ──►    GET /api/audio/:id
-                                              └ yt-dlp finds the audio; the server relays it
-YouTube IFrame player (Watch)                 GET /api/channels/find?q=
-<img src="/api/avatar/:id">                   GET /api/avatar/:id
+Client (PWA / iOS / Android)                  Server (Hono + Node SQLite + Background Crawler)
+──────────────────────────────────────────    ─────────────────────────────────────────────────────
+local-first state, tombstones, ratings   ◄─►  GET/PUT /api/me/state (If-Match revision check)
+lightweight playback ticks (every 30s)   ──►  PATCH /api/me/progress
+batched channel refresh (≤50/req)        ──►  POST /api/channels/batch
+                                                └ SQLite channel_feeds + ETag RSS + YT token bucket
+daily Discover edition (1×/day)          ──►  POST /api/discover
+                                                └ Watch-Next graph (or encrypted cookie on self-host)
+deterministic filter + on-device taste   ──►  POST /api/judge (rate-limited, daily budget)
+                                                └ canonical shared cache (server-verified catalog)
+                                                └ isolated per-user cache for custom rubrics
+<audio src="/api/audio/:id">             ──►  GET /api/audio/:id (yt-dlp audio relay with Range)
 ```
-
-- **No API key.** Feeds come from YouTube's public RSS; lengths from one request per channel. Responses are the same for everyone, so a CDN can cache them.
-- **Audio.** The server waits until a fresh stream URL is ready, then relays it in 8 MB chunks with Range support so Safari can seek. The feed warms the two likeliest next plays, so play is instant.
-- **Small on purpose.** React + Vite with no router, state library, or UI kit: about 2,800 lines of TypeScript and one stylesheet. The server is [Hono](https://hono.dev), under 500 lines.
-
-## Roadmap
-
-- Sync between devices without an account
-- Shared rule sets you can publish and subscribe to
-- Per-channel rules and an Up Next queue
-- Show notes with links in the player
 
 ## Contributing
 
-Pull requests are welcome, especially **starter packs** ([`starter.ts`](src/lib/starter.ts)) and **filter behavior** ([`filter.ts`](src/lib/filter.ts) with [its tests](test/filter.test.ts)). The filter must stay deterministic and explainable: every hidden video needs a one-line reason.
+Pull requests are welcome — especially **starter packs** ([`starter.ts`](src/lib/starter.ts)), **filter & personalization improvements** ([`filter.ts`](src/lib/filter.ts), [`personalize.ts`](src/lib/personalize.ts)), and expanding the **real-YouTube benchmark dataset** ([`test/fixtures/real-youtube-benchmark.json`](test/fixtures/real-youtube-benchmark.json)).
 
 <br>
 
